@@ -20,6 +20,9 @@
         color: #efe9f4;
         background-color: #171D1C;
         }
+        .hover-effect p:hover {
+        transform: translateY(-5px);
+        } 
         nav{
           color: #efe9f4;
         }
@@ -30,17 +33,60 @@
         width: 85%;
         height: 50px;
         }
+        .navbar2{
+          display: none;
+        }
+        .image-container img {
+        max-width: 50%;
+        height: auto;
+        }
+        @media only screen and (max-width: 768px) {
+          ul {
+          list-style: none;
+        }
+        nav {
+          background-color: #171D1C;
+        }
+        body {
+        margin: 0;
+        padding: 0;
+        height: 150vh;
+        color: #efe9f4;
+        background-color: #171D1C;
+        }
+        .hover-effect p:hover {
+        transform: translateY(-5px);
+        } 
+        nav{
+          color: #efe9f4;
+        }
+        footer {
+        color: #efe9f4;
+        width: 100%;
+        height: 80px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        }
+        .navbar2{
+          background-color: #5863f8;
+        }
+        .mobile-hide{
+          display: none;
+        }
+        .image-container img {
+        max-width: 50%;
+        height: auto;
+        }
+        }
       </style>
 </head>
 <body>
     <div class="container">
         <nav class="navbar navbar-expand-lg" data-bs-theme="dark">
             <div class="container-fluid">
-              <img src="./img/trace.svg" alt="Logo" width="30" height="24" class="d-inline-block align-text-top">
+              <img src="./img/Songgestions_logo.png" alt="Logo" width="60" height="48" class="d-inline-block align-text-top" href="/">
               <a class="navbar-brand" href="/loggedin">Songgestions</a>
-              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-              </button>
               <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
                   <a class="nav-link active" href="/contact">Contact</a>
@@ -48,6 +94,7 @@
                 </div>
               </div>
             </div>
+            <img src="./img/placeholder-pfp.jpg "width="48" height="48">
           </nav>
-      </div>
+      </div></br></br>
       <div class="container" style="text-align: center;" >
