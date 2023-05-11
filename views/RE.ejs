@@ -1,0 +1,9 @@
+<%- include("templates/header") %> 
+    <%  if (RE == 1) { %> 
+        RE1: <img src='/RE1.jpg' style='width:250px;'>
+    <% } else if (RE == 2) { %>
+        RE2: <img src='/RE2.png' style='width:250px;'>
+    <% } else { %>
+        Invalid RE id: <%= RE %> 
+    <% } %>  
+<%- include("templates/footer") %> 
