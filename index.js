@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const MongoStore = require('connect-mongo');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const saltRounds = 12;
 
 const session = require('express-session');
@@ -24,7 +25,8 @@ const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_database = process.env.MONGODB_DATABASE;
-
+const songgestions_email = process.env.SONGGESTIONS_SUPPORT_EMAIL;
+const songgestions_password = process.env.SONGGESTIONS_SUPPORT_PASSWORD;
 
 var {database} = include('databaseConnection');
 
@@ -54,6 +56,7 @@ app.use(session({
 	resave: true
 }
 ));
+
 
 
 const isAuthenticated = (req, res, next) => {
@@ -151,14 +154,20 @@ app.get('/loginErrorPassword', (req,res) => {
 app.post('/submitUser', async (req,res) => {
     var username = req.body.username;
     var password = req.body.password;
+    var email = req.body.email;
+    var securityQuestion = req.body.securityQuestion;
+    var securityAnswer = req.body.securityAnswer;
 
     const schema = Joi.object(
 		{
 			username: Joi.string().alphanum().max(20).required(),
-			password: Joi.string().max(20).required()
+            email: Joi.string().email().required(),
+			password: Joi.string().max(20).required(),
+            securityAnswer: Joi.string().max(20).required()
+
 		});
 
-	const validationResult = schema.validate({username, password});
+	const validationResult = schema.validate({username, email, password, securityAnswer});
 	if (validationResult.error != null) {
 	   console.log(validationResult.error);
 	   res.redirect("/createUser");
@@ -166,8 +175,16 @@ app.post('/submitUser', async (req,res) => {
    }
 
     var hashedPassword = await bcrypt.hash(password, saltRounds);
+    var hashedSecurityAnswer = await bcrypt.hash(securityAnswer, saltRounds);
+    
 
-	await userCollection.insertOne({username: username, password: hashedPassword, user_type: "user"});
+	await userCollection.insertOne({
+        username: username,
+        email: email,
+        password: hashedPassword,
+        securityQuestion : securityQuestion,
+        securityAnswer : hashedSecurityAnswer,
+        user_type: "user"});
 	console.log("Inserted user");
 
     req.session.authenticated = true;
@@ -234,6 +251,9 @@ app.get('/loggedin/info', (req,res) => {
     res.render("loggedin-info");
 });
 
+app.get('/forgotPassword', (req,res) => {
+    res.render("forgotPassword");
+});
 
 app.get('/about', (req,res) => {
     res.render("about");
@@ -266,6 +286,129 @@ app.post('/submitEmail', (req,res) => {
     }
 });
 
+app.post('/checkEmail', async (req,res) => {
+    var email = req.body.email;
+    const result = await userCollection.find({email: email}).project({username: 1, securityQuestion: 1, _id: 1}).toArray();
+    console.log(result);
+    if (result.length != 1) {
+        console.log("user not found");
+        res.redirect("/forgotPasswordError");
+        return;
+    }
+    else {
+        const token = crypto.randomBytes(20).toString('hex');
+        const expireTime = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
+        await userCollection.updateOne({email: email}, {$set: {resetPasswordToken: token, resetPasswordExpires: expireTime}});
+        console.log("token: "+token);
+
+        res.render("securityQuestion", {email: email, securityQuestion: result[0].securityQuestion, token: token});
+    }
+});
+
+app.get('/forgotPasswordError', (req,res) => {
+    res.render("forgotPasswordError");
+});
+
+app.get('/securityQuestion', (req,res) => {
+    res.render("securityQuestion");
+});
+
+app.get('/securityQuestionError', (req,res) => {
+    res.render("securityQuestionError");
+});
+
+app.get('/resetPassword', (req,res) => {
+    res.render("resetPassword");
+});
+
+app.get('/resetPasswordError', (req,res) => {
+    res.render("resetPasswordError");
+});
+
+
+app.post('/checkSecurityQuestion', async (req, res) => {
+    var email = req.body.email;
+    var securityAnswer = req.body.securityAnswer;
+    var token = req.body.token;
+  
+    const result = await userCollection
+      .find({ email: email })
+      .project({ username: 1, securityAnswer: 1, resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 })
+      .toArray();
+    console.log(result);
+  
+    if (securityAnswer == null) {
+      res.redirect("/securityQuestionError");
+      return;
+    }
+    if (result.length != 1) {
+      console.log("user not found");
+      res.redirect("/securityQuestionError");
+      return;
+    } else {
+      const user = result[0];
+      if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
+        console.log("correct security answer");
+        if (Date.now() > user.resetPasswordExpires) {
+          console.log("token expired");
+          res.redirect("/tokenExpired");
+          return;
+        } else {
+          console.log("token not expired");
+          res.render("resetPassword", { email: email, token: token });
+          return;
+        }
+      } else {
+        console.log("incorrect security answer");
+        res.redirect("/securityQuestionError");
+        return;
+      }
+    }
+  });
+  
+app.post('/resetPassword', async (req, res) => {
+    var email = req.body.email;
+    var newPass = req.body.newPassword;
+    var confirmPass = req.body.confirmPassword;
+    
+    const result = await userCollection.find({ email: email }).project({ username: 1, resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 }).toArray();
+    if (newPass == null || confirmPass == null) {
+        res.redirect("/resetPasswordError");
+        console.log("password not entered");
+        return;
+    }
+    if (result.length != 1) {
+        console.log("user not found");
+        res.redirect("/resetPasswordError");
+        console.log("user not found");
+        return;
+    } else {
+        const user = result[0];
+        if (newPass !== confirmPass) {
+            console.log("passwords do not match");
+            res.redirect("/resetPasswordError");
+            console.log("passwords do not match");
+            return;
+        } else {
+            console.log("passwords match");
+            var hashedPassword = await bcrypt.hash(newPass, saltRounds);
+            await userCollection.updateOne({ email: email }, { $set: { password: hashedPassword } });
+            console.log("password updated");
+            res.redirect("/login");
+            return;
+        }
+    }
+});
+
+   
+
+
+
+
+const nodemailer = require('nodemailer');
+
+
+
 
 app.get('/logout', (req,res) => {
 	req.session.destroy();
@@ -273,12 +416,12 @@ app.get('/logout', (req,res) => {
 });
 
 
-app.get('/RE/:id', (req,res) => {
+// app.get('/RE/:id', (req,res) => {
 
-    var RE = req.params.id;
+//     var RE = req.params.id;
 
-    res.render("RE  ", {RE: RE});
-});
+//     res.render("RE  ", {RE: RE});
+// });
 
 app.get('/admin', sessionValidation, adminAuthorization, async (req,res) => {
     if (!req.session.authenticated) {
@@ -289,23 +432,23 @@ app.get('/admin', sessionValidation, adminAuthorization, async (req,res) => {
     res.render("admin", {users: result});
 });
   
-app.post('/adminUser', sessionValidation, adminAuthorization, async (req,res) => {
-    const ObjectId = require('mongodb').ObjectId;
-    const userId = req.body.userId;
-    const userObjectId = new ObjectId(userId);
-    await userCollection.updateOne({_id: userObjectId}, {$set: {user_type: "admin"}});
-    console.log(userId)
-    res.redirect('/admin');
-  });
+// app.post('/adminUser', sessionValidation, adminAuthorization, async (req,res) => {
+//     const ObjectId = require('mongodb').ObjectId;
+//     const userId = req.body.userId;
+//     const userObjectId = new ObjectId(userId);
+//     await userCollection.updateOne({_id: userObjectId}, {$set: {user_type: "admin"}});
+//     console.log(userId)
+//     res.redirect('/admin');
+//   });
 
-  app.post('/unAdminUser', sessionValidation, adminAuthorization, async (req,res) => {
-    const ObjectId = require('mongodb').ObjectId;
-    const userId = req.body.userId;
-    const userObjectId = new ObjectId(userId);
-    await userCollection.updateOne({_id: userObjectId}, {$set: {user_type: "user"}});
-    console.log(userId)
-    res.redirect('/admin');
-  });
+//   app.post('/unAdminUser', sessionValidation, adminAuthorization, async (req,res) => {
+//     const ObjectId = require('mongodb').ObjectId;
+//     const userId = req.body.userId;
+//     const userObjectId = new ObjectId(userId);
+//     await userCollection.updateOne({_id: userObjectId}, {$set: {user_type: "user"}});
+//     console.log(userId)
+//     res.redirect('/admin');
+//   });
 
 
 app.use(express.static(__dirname + "/public"));
@@ -317,5 +460,5 @@ app.get("*", (req,res) => {	res.status(404);
 
 
 app.listen(port, () => {
-    console.log("Your Assignment 2 is listening on port "+port);
+    console.log("Songgestions is listening on port " + port);
 })
