@@ -1,0 +1,18 @@
+<%- include("templates/header") %> 
+<ul>
+    <% users.forEach((user) => { %>
+      <li>
+        <%= user.username %>
+        <form method="POST" action="/adminUser">
+          <input type="hidden" name="userId" value="<%= user._id %>">
+          <button type="submit" class="btn btn-outline-primary">Promote Admin</button>
+        </form>
+        <form method="POST" action="/unAdminUser">
+          <input type="hidden" name="userId" value="<%= user._id %>">
+          <button type="submit" class="btn btn-outline-primary">Remove Admin</button>
+        </form>
+      </li>
+    <% }) %>
+</ul>
+
+<%- include("templates/footer") %> 

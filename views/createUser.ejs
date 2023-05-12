@@ -1,0 +1,39 @@
+<%- include("templates/header") %>
+    <h2>Create Account</h2>
+    <div class="mb-3">
+        <form action='/submitUser' method='post'>
+            <div class="mb-3">
+                <label for="formGroupExampleInput" class="form-label">Username</label>
+                <input name='username' type="text" class="form-control" id="formGroupExampleInput"
+                    placeholder="Username">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input name='email' type="email" class="form-control" id="email" placeholder="email@example.com">
+            </div>
+            <div class="mb-3">
+                <label for="formGroupExampleInput2" class="form-label">Password</label>
+                <input name='password' type="text" class="form-control" id="formGroupExampleInput2"
+                    placeholder="Password" maxlength="20">
+            </div>
+            <div class="mb-3">
+                <label for="securityQuestion" class="form-label">Security Question</label>
+                <select name="securityQuestion" class="form-control" id="securityQuestion">
+                    <option value="What is your Mother's Maiden Name?">What is your Mother's Maiden Name?</option>
+                    <option value="What is your Pet's Name?">What is your Pet's Name?</option>
+                    <option value="favorite_teacher">What is your Favourite Song?</option>
+                    <option value="What is your Favourite Game?">What is your Favourite Game?</option>
+                    <option value="What was your Favourite Book?">What was your Favourite Book?</option>
+                    <option value="What is your Favourite Movie?">What is your Favourite Movie?</option>
+                    <option value="What is your Favourite Movie?">What is your Favourite TV Show?</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="securityAnswer" class="form-label">Security Answer</label>
+                <input name="securityAnswer" type="text" class="form-control" id="securityAnswer"
+                    placeholder="Security Answer">
+            </div>
+            <button class="btn btn-outline-primary">Submit</button>
+        </form>
+    </div>
+    <%- include("templates/footer") %>
