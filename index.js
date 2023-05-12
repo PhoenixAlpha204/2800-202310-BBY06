@@ -336,14 +336,6 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-
-// app.get('/RE/:id', (req,res) => {
-
-//     var RE = req.params.id;
-
-//     res.render("RE  ", {RE: RE});
-// });
-
 app.get('/admin', sessionValidation, adminAuthorization, async (req, res) => {
     if (!req.session.authenticated) {
         res.redirect('/login');
@@ -409,6 +401,7 @@ app.post("/searchSong", async (req, res) => {
     res.render("results", { results: list });
 });
 
+//this function sourced from: https://astromacguffin.com/ref/id/62dc488124d8b5752194eccd
 function formatSearch(searchTerm) {
     return searchTerm
         .replace(/\(/gi, ' ')

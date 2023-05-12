@@ -2,11 +2,20 @@
     <h2>Results</h2>
     <br/><br/>
     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-        <ul class="list-group d-inline-block">
+        <div class="list-group">
             <% for(i = 0; i < results.length; i++) { %>
-                <li> <%= results[i].name %> </li>
-                <br/>
+                <div class="list-group-item" style="margin-bottom: 10px;">
+                    <h4 class="d-flex justify-content-start"> <%= results[i].name %> </h4>
+                    <div class="rectangle" style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
+                        <h4>[Spotify Embed Placeholder]</h4>
+                    </div>
+                    <br/>
+                    <div class="d-flex justify-content-end">
+                        <span class="material-icons" style="font-size: 30pt; margin-right: 10px;">thumb_up</span>
+                        <span class="material-icons" style="font-size: 30pt;">thumb_down</span>
+                    </div>
+                </div>
             <% } %>
-        </ul>
+        </div>
     </div>
 <%- include("templates/footer") %>
