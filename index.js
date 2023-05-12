@@ -184,6 +184,25 @@ app.get("/loggedin", sessionValidation, (req, res) => {
     res.render(template, data);
 });
 
+app.get("/profile", sessionValidation, async (req, res) => {
+    var username = req.session.username;
+        const result = await userCollection.find({username: username}).project({ username: 1, email: 1, securityQuestion: 1, _id: 1 }).toArray();
+        console.log(result);
+        if (result.length != 1) {
+            console.log("user not found");
+            res.redirect("/loginErrorUser");
+            return;
+        } else {
+            const user = result[0];
+            res.render("profile", { username: username, email: user.email, securityQuestion: user.securityQuestion });
+            return;
+        }
+
+
+});
+
+
+
 app.get('/forgotPassword', (req, res) => {
     res.render("forgotPassword");
 });
@@ -329,28 +348,12 @@ app.post('/resetPassword', async (req, res) => {
     }
 });
 
-
-
-
-
-
 const nodemailer = require('nodemailer');
-
-
-
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
-
-
-// app.get('/RE/:id', (req,res) => {
-
-//     var RE = req.params.id;
-
-//     res.render("RE  ", {RE: RE});
-// });
 
 app.get('/admin', sessionValidation, adminAuthorization, async (req, res) => {
     if (!req.session.authenticated) {
@@ -379,13 +382,31 @@ app.post('/unAdminUser', sessionValidation, adminAuthorization, async (req, res)
     res.redirect('/admin');
 });
 
-app.get("/search", (req, res) => {
+app.get("/search", sessionValidation, (req, res) => {
     res.render("search");
 });
 
 app.post("/searchSong", async (req, res) => {
-    var searchTerm = formatSearch(req.body.song);
+    var searchTerm;
+    if (req.body.song != null) {
+        searchTerm = req.body.song;
+    } else {
+        searchTerm = req.query.q;
+    }
     console.log(searchTerm);
+    const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+    if (result[0].searchHistory == null) {
+        result[0].searchHistory = [];
+    }
+    if (result[0].searchHistory[0] != searchTerm) {
+        result[0].searchHistory.unshift(searchTerm);
+        if (result[0].searchHistory.length > 5) {
+            result[0].searchHistory.pop();
+        }
+        console.log(result[0].searchHistory);
+    }
+    await userCollection.updateOne({ _id: result[0]._id }, { $set: { searchHistory: result[0].searchHistory } });
+    searchTerm = formatSearch(searchTerm);
     const songCollection = database.db(mongodb_database).collection("songs_dummy");
     var list = await songCollection.find().project({ name: 1 }).toArray();
     list.forEach((song) => {
@@ -393,11 +414,11 @@ app.post("/searchSong", async (req, res) => {
         song.count = 0;
     });
     var count = 0;
-    searchTerm.forEach((term) => {
-        list.forEach((song) => {
-            song.formattedName.forEach((name) => {
-                if (term === name) {
-                    count++;
+    list.forEach((song) => {
+        song.formattedName.forEach((name) => {  
+            searchTerm.forEach((term) => {
+                if (name.match(new RegExp(term, 'g'))) {
+                    count += term.length / name.length;
                 }
             });
             song.count += count / song.formattedName.length;
@@ -417,6 +438,7 @@ app.post("/searchSong", async (req, res) => {
     res.render("results", { results: list });
 });
 
+//this function sourced from: https://astromacguffin.com/ref/id/62dc488124d8b5752194eccd
 function formatSearch(searchTerm) {
     return searchTerm
         .replace(/\(/gi, ' ')
@@ -454,6 +476,11 @@ function formatSearch(searchTerm) {
         .toLowerCase()
         .split(' ');
 }
+
+app.post("/searchHistory", async (req, res) => {
+    const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+    res.render("history", { searches: result[0].searchHistory });
+});
 
 app.use(express.static(__dirname + "/public"));
 
