@@ -1,0 +1,19 @@
+<%- include("templates/header") %> 
+    <h2>Browse</h2>
+    <br/><br/>
+    <div class="mb-3">
+      <form action="/searchSong" method="post">
+        <div class="mb-3">
+          <label for="song" class="form-label">Enter a Song</label>
+          <input name="song" type="text" class="form-control" id="song" placeholder="Song name:">
+        </div>
+        <button class="btn btn-outline-primary" type="submit">Submit</button>
+      </form>
+      <br/><br/>
+      <h5>or</h5>
+      <br/><br/>
+      <form action="/searchGenre" method="post">
+        <button class="btn btn-outline-primary">Browse a Genre</button>
+      </form>
+    </div>
+<%- include("templates/footer") %> 

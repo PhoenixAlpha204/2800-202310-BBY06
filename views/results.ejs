@@ -1,0 +1,12 @@
+<%- include("templates/header") %> 
+    <h2>Results</h2>
+    <br/><br/>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <ul class="list-group d-inline-block">
+            <% for(i = 0; i < results.length; i++) { %>
+                <li> <%= results[i].name %> </li>
+                <br/>
+            <% } %>
+        </ul>
+    </div>
+<%- include("templates/footer") %>
