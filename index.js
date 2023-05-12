@@ -1,8 +1,10 @@
 require("./utils.js");
-require("dotenv").config();
-const express = require("express");
-const MongoStore = require("connect-mongo");
-const bcrypt = require("bcrypt");
+
+require('dotenv').config();
+const express = require('express');
+const MongoStore = require('connect-mongo');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const saltRounds = 12;
 
 const session = require("express-session");
@@ -23,6 +25,8 @@ const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const node_session_secret = process.env.NODE_SESSION_SECRET;
 
 const ObjectId = require("mongodb").ObjectId;
+const songgestions_email = process.env.SONGGESTIONS_SUPPORT_EMAIL;
+const songgestions_password = process.env.SONGGESTIONS_SUPPORT_PASSWORD;
 
 var { database } = include("databaseConnection");
 const userCollection = database.db(mongodb_database).collection("users");
@@ -53,7 +57,7 @@ function isAuthenticated(req, res, next) {
     }
 };
 
-function sessionValidation(req,res,next) {
+function sessionValidation(req, res, next) {
     if (req.session.authenticated) {
         next();
     } else {
@@ -64,7 +68,7 @@ function sessionValidation(req,res,next) {
 function adminAuthorization(req, res, next) {
     if (req.session.user_type != 'admin') {
         res.status(403);
-        res.render("errorMessage", {error: "Not Authorized"});
+        res.render("errorMessage", { error: "Not Authorized" });
         return;
     }
     else {
@@ -95,13 +99,20 @@ app.get("/loginErrorPassword", (req, res) => {
 app.post("/submitUser", async (req, res) => {
     var username = req.body.username;
     var password = req.body.password;
+    var email = req.body.email;
+    var securityQuestion = req.body.securityQuestion;
+    var securityAnswer = req.body.securityAnswer;
 
-    const schema = Joi.object({
-        username: Joi.string().alphanum().max(20).required(),
-        password: Joi.string().max(20).required(),
-    });
+    const schema = Joi.object(
+        {
+            username: Joi.string().alphanum().max(20).required(),
+            email: Joi.string().email().required(),
+            password: Joi.string().max(20).required(),
+            securityAnswer: Joi.string().max(20).required()
 
-    const validationResult = schema.validate({ username, password });
+        });
+
+    const validationResult = schema.validate({ username, email, password, securityAnswer });
     if (validationResult.error != null) {
         console.log(validationResult.error);
         res.redirect("/createUser");
@@ -109,11 +120,16 @@ app.post("/submitUser", async (req, res) => {
     }
 
     var hashedPassword = await bcrypt.hash(password, saltRounds);
+    var hashedSecurityAnswer = await bcrypt.hash(securityAnswer, saltRounds);
+
 
     await userCollection.insertOne({
         username: username,
+        email: email,
         password: hashedPassword,
-        user_type: "user",
+        securityQuestion: securityQuestion,
+        securityAnswer: hashedSecurityAnswer,
+        user_type: "user"
     });
     console.log("Inserted user");
 
@@ -168,7 +184,11 @@ app.get("/loggedin", sessionValidation, (req, res) => {
     res.render(template, data);
 });
 
-app.get("/about", (req, res) => {
+app.get('/forgotPassword', (req, res) => {
+    res.render("forgotPassword");
+});
+
+app.get('/about', (req, res) => {
     res.render("about");
 });
 
@@ -313,28 +333,42 @@ const nodemailer = require('nodemailer');
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    res.redirect("/");
+    res.redirect('/');
 });
 
-app.get("/admin", sessionValidation, adminAuthorization, async (req, res) => {
+
+// app.get('/RE/:id', (req,res) => {
+
+//     var RE = req.params.id;
+
+//     res.render("RE  ", {RE: RE});
+// });
+
+app.get('/admin', sessionValidation, adminAuthorization, async (req, res) => {
+    if (!req.session.authenticated) {
+        res.redirect('/login');
+    }
     const result = await userCollection.find().project({ username: 1, _id: 1 }).toArray();
+
     res.render("admin", { users: result });
 });
 
-app.post("/adminUser", sessionValidation, adminAuthorization, async (req, res) => {
+app.post('/adminUser', sessionValidation, adminAuthorization, async (req, res) => {
+    const ObjectId = require('mongodb').ObjectId;
     const userId = req.body.userId;
     const userObjectId = new ObjectId(userId);
     await userCollection.updateOne({ _id: userObjectId }, { $set: { user_type: "admin" } });
-    console.log(userId);
-    res.redirect("/admin");
+    console.log(userId)
+    res.redirect('/admin');
 });
 
-app.post("/unAdminUser", sessionValidation, adminAuthorization, async (req, res) => {
+app.post('/unAdminUser', sessionValidation, adminAuthorization, async (req, res) => {
+    const ObjectId = require('mongodb').ObjectId;
     const userId = req.body.userId;
     const userObjectId = new ObjectId(userId);
     await userCollection.updateOne({ _id: userObjectId }, { $set: { user_type: "user" } });
-    console.log(userId);
-    res.redirect("/admin");
+    console.log(userId)
+    res.redirect('/admin');
 });
 
 app.get("/search", sessionValidation, (req, res) => {
@@ -358,7 +392,7 @@ app.post("/searchSong", async (req, res) => {
                     count++;
                 }
             });
-            song.count += count;
+            song.count += count / song.formattedName.length;
             count = 0;
         });
     });
@@ -377,40 +411,40 @@ app.post("/searchSong", async (req, res) => {
 
 function formatSearch(searchTerm) {
     return searchTerm
-    .replace(/\(/gi, ' ')
-    .replace(/\)/gi, ' ')
-    .replace(/\./gi, ' ')
-    .replace(/!/gi,  ' ')
-    .replace(/@/gi,  ' ')
-    .replace(/#/gi,  ' ')
-    .replace(/\$/gi, ' ')
-    .replace(/\%/gi, ' ')
-    .replace(/\^/gi, ' ')
-    .replace(/&/gi,  ' ')
-    .replace(/\*/gi, ' ')
-    .replace(/-/gi,  ' ')
-    .replace(/_/gi,  ' ')
-    .replace(/=/gi,  ' ')
-    .replace(/\+/gi, ' ')
-    .replace(/\{/gi, ' ')
-    .replace(/\[/gi, ' ')
-    .replace(/\}/gi, ' ')
-    .replace(/\]/gi, ' ')
-    .replace(/:/gi,  ' ')
-    .replace(/;/gi,  ' ')
-    .replace(/"/gi,  ' ')
-    .replace(/'/gi,  ' ')
-    .replace(/`/gi,  ' ')
-    .replace(/,/gi,  ' ')
-    .replace(/>/gi,  ' ')
-    .replace(/</gi,  ' ')
-    .replace(/\//gi, ' ')
-    .replace(/\?/gi, ' ')
-    .replace(/\|/gi, ' ')
-    .replace(/\\/gi, ' ')
-    .replace(/\n/gi, ' ')
-    .toLowerCase()
-    .split(' ');
+        .replace(/\(/gi, ' ')
+        .replace(/\)/gi, ' ')
+        .replace(/\./gi, ' ')
+        .replace(/!/gi, ' ')
+        .replace(/@/gi, ' ')
+        .replace(/#/gi, ' ')
+        .replace(/\$/gi, ' ')
+        .replace(/\%/gi, ' ')
+        .replace(/\^/gi, ' ')
+        .replace(/&/gi, ' ')
+        .replace(/\*/gi, ' ')
+        .replace(/-/gi, ' ')
+        .replace(/_/gi, ' ')
+        .replace(/=/gi, ' ')
+        .replace(/\+/gi, ' ')
+        .replace(/\{/gi, ' ')
+        .replace(/\[/gi, ' ')
+        .replace(/\}/gi, ' ')
+        .replace(/\]/gi, ' ')
+        .replace(/:/gi, ' ')
+        .replace(/;/gi, ' ')
+        .replace(/"/gi, ' ')
+        .replace(/'/gi, ' ')
+        .replace(/`/gi, ' ')
+        .replace(/,/gi, ' ')
+        .replace(/>/gi, ' ')
+        .replace(/</gi, ' ')
+        .replace(/\//gi, ' ')
+        .replace(/\?/gi, ' ')
+        .replace(/\|/gi, ' ')
+        .replace(/\\/gi, ' ')
+        .replace(/\n/gi, ' ')
+        .toLowerCase()
+        .split(' ');
 }
 
 app.use(express.static(__dirname + "/public"));
