@@ -381,10 +381,10 @@ app.post("/searchSong", async (req, res) => {
     }
     if (result[0].searchHistory[0] != searchTerm) {
         result[0].searchHistory.unshift(searchTerm);
-        console.log(result[0].searchHistory);
         if (result[0].searchHistory.length > 5) {
             result[0].searchHistory.pop();
         }
+        console.log(result[0].searchHistory);
     }
     await userCollection.updateOne({ _id: result[0]._id }, { $set: { searchHistory: result[0].searchHistory } });
     searchTerm = formatSearch(searchTerm);
@@ -395,11 +395,11 @@ app.post("/searchSong", async (req, res) => {
         song.count = 0;
     });
     var count = 0;
-    searchTerm.forEach((term) => {
-        list.forEach((song) => {
-            song.formattedName.forEach((name) => {
-                if (term === name) {
-                    count++;
+    list.forEach((song) => {
+        song.formattedName.forEach((name) => {  
+            searchTerm.forEach((term) => {
+                if (name.match(new RegExp(term, 'g'))) {
+                    count += term.length / name.length;
                 }
             });
             song.count += count / song.formattedName.length;
