@@ -368,8 +368,26 @@ app.get("/search", sessionValidation, (req, res) => {
 });
 
 app.post("/searchSong", async (req, res) => {
-    var searchTerm = formatSearch(req.body.song);
+    var searchTerm;
+    if (req.body.song != null) {
+        searchTerm = req.body.song;
+    } else {
+        searchTerm = req.query.q;
+    }
     console.log(searchTerm);
+    const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+    if (result[0].searchHistory == null) {
+        result[0].searchHistory = [];
+    }
+    if (result[0].searchHistory[0] != searchTerm) {
+        result[0].searchHistory.unshift(searchTerm);
+        console.log(result[0].searchHistory);
+        if (result[0].searchHistory.length > 5) {
+            result[0].searchHistory.pop();
+        }
+    }
+    await userCollection.updateOne({ _id: result[0]._id }, { $set: { searchHistory: result[0].searchHistory } });
+    searchTerm = formatSearch(searchTerm);
     const songCollection = database.db(mongodb_database).collection("songs_dummy");
     var list = await songCollection.find().project({ name: 1 }).toArray();
     list.forEach((song) => {
@@ -439,6 +457,11 @@ function formatSearch(searchTerm) {
         .toLowerCase()
         .split(' ');
 }
+
+app.post("/searchHistory", async (req, res) => {
+    const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+    res.render("history", { searches: result[0].searchHistory });
+});
 
 app.use(express.static(__dirname + "/public"));
 

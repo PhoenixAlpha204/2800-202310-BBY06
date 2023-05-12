@@ -1,0 +1,12 @@
+<%- include("templates/header") %> 
+    <h2>Search History</h2>
+    <br/><br/>
+    <div class="container justify-content-sm-center">
+        <% for(i = 0; i < searches.length; i++) { %>
+            <form action="/searchSong?q=<%= searches[i] %>" method="post">
+                <button class="btn btn-outline-light btn-lg" type="submit"><%= searches[i] %></button>
+            </form>
+            <br/>
+        <% } %>
+    </div>
+<%- include("templates/footer") %> 
