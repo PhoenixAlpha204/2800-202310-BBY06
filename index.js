@@ -184,6 +184,25 @@ app.get("/loggedin", sessionValidation, (req, res) => {
     res.render(template, data);
 });
 
+app.get("/profile", sessionValidation, async (req, res) => {
+    var username = req.session.username;
+        const result = await userCollection.find({username: username}).project({ username: 1, email: 1, securityQuestion: 1, _id: 1 }).toArray();
+        console.log(result);
+        if (result.length != 1) {
+            console.log("user not found");
+            res.redirect("/loginErrorUser");
+            return;
+        } else {
+            const user = result[0];
+            res.render("profile", { username: username, email: user.email, securityQuestion: user.securityQuestion });
+            return;
+        }
+
+
+});
+
+
+
 app.get('/forgotPassword', (req, res) => {
     res.render("forgotPassword");
 });
