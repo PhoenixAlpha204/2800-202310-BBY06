@@ -195,7 +195,123 @@ app.post("/submitEmail", (req, res) => {
     }
 });
 
-app.get("/logout", (req, res) => {
+app.post('/checkEmail', async (req, res) => {
+    var email = req.body.email;
+    const result = await userCollection.find({ email: email }).project({ username: 1, securityQuestion: 1, _id: 1 }).toArray();
+    console.log(result);
+    if (result.length != 1) {
+        console.log("user not found");
+        res.redirect("/forgotPasswordError");
+        return;
+    }
+    else {
+        const token = crypto.randomBytes(20).toString('hex');
+        const expireTime = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
+        await userCollection.updateOne({ email: email }, { $set: { resetPasswordToken: token, resetPasswordExpires: expireTime } });
+        console.log("token: " + token);
+
+        res.render("securityQuestion", { email: email, securityQuestion: result[0].securityQuestion, token: token });
+    }
+});
+
+app.get('/forgotPasswordError', (req, res) => {
+    res.render("forgotPasswordError");
+});
+
+app.get('/securityQuestion', (req, res) => {
+    res.render("securityQuestion");
+});
+
+app.get('/securityQuestionError', (req, res) => {
+    res.render("securityQuestionError");
+});
+
+app.get('/resetPassword', (req, res) => {
+    res.render("resetPassword");
+});
+
+app.get('/resetPasswordError', (req, res) => {
+    res.render("resetPasswordError");
+});
+
+
+app.post('/checkSecurityQuestion', async (req, res) => {
+    var email = req.body.email;
+    var securityAnswer = req.body.securityAnswer;
+    var token = req.body.token;
+
+    const result = await userCollection
+        .find({ email: email })
+        .project({ username: 1, securityAnswer: 1, resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 })
+        .toArray();
+    console.log(result);
+
+    if (securityAnswer == null) {
+        res.redirect("/securityQuestionError");
+        return;
+    }
+    if (result.length != 1) {
+        console.log("user not found");
+        res.redirect("/securityQuestionError");
+        return;
+    } else {
+        const user = result[0];
+        if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
+            console.log("correct security answer");
+            if (Date.now() > user.resetPasswordExpires) {
+                console.log("token expired");
+                res.redirect("/tokenExpired");
+                return;
+            } else {
+                console.log("token not expired");
+                res.render("resetPassword", { email: email, token: token });
+                return;
+            }
+        } else {
+            console.log("incorrect security answer");
+            res.redirect("/securityQuestionError");
+            return;
+        }
+    }
+});
+
+app.post('/resetPassword', async (req, res) => {
+    var email = req.body.email;
+    var newPass = req.body.newPassword;
+    var confirmPass = req.body.confirmPassword;
+
+    const result = await userCollection.find({ email: email }).project({ username: 1, resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 }).toArray();
+    if (newPass == null || confirmPass == null) {
+        res.redirect("/resetPasswordError");
+        console.log("password not entered");
+        return;
+    }
+    if (result.length != 1) {
+        console.log("user not found");
+        res.redirect("/resetPasswordError");
+        console.log("user not found");
+        return;
+    } else {
+        const user = result[0];
+        if (newPass !== confirmPass) {
+            console.log("passwords do not match");
+            res.redirect("/resetPasswordError");
+            console.log("passwords do not match");
+            return;
+        } else {
+            console.log("passwords match");
+            var hashedPassword = await bcrypt.hash(newPass, saltRounds);
+            await userCollection.updateOne({ email: email }, { $set: { password: hashedPassword } });
+            console.log("password updated");
+            res.redirect("/login");
+            return;
+        }
+    }
+});
+
+const nodemailer = require('nodemailer');
+
+app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect("/");
 });
@@ -221,8 +337,8 @@ app.post("/unAdminUser", sessionValidation, adminAuthorization, async (req, res)
     res.redirect("/admin");
 });
 
-app.get("/search", (req, res) => {
-    res.render("search"); 
+app.get("/search", sessionValidation, (req, res) => {
+    res.render("search");
 });
 
 app.post("/searchSong", async (req, res) => {
