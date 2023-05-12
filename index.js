@@ -242,7 +242,7 @@ app.post("/searchSong", async (req, res) => {
                     count++;
                 }
             });
-            song.count += count;
+            song.count += count / song.formattedName.length;
             count = 0;
         });
     });
