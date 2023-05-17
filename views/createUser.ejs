@@ -1,23 +1,23 @@
 <%- include("templates/header") %>
-    <h2>Create Account</h2>
+    <h2 class="hover-effect" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Create Account</h2>
     <div class="mb-3">
         <form action='/submitUser' method='post'>
             <div class="mb-3">
-                <label for="formGroupExampleInput" class="form-label">Username</label>
+                <label for="formGroupExampleInput" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Username</label>
                 <input name='username' type="text" class="form-control" id="formGroupExampleInput"
                     placeholder="Username">
             </div>
             <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
+                <label for="email" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Email</label>
                 <input name='email' type="email" class="form-control" id="email" placeholder="email@example.com">
             </div>
             <div class="mb-3">
-                <label for="formGroupExampleInput2" class="form-label">Password</label>
+                <label for="formGroupExampleInput2" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Password</label>
                 <input name='password' type="password" class="form-control" id="formGroupExampleInput2"
                     placeholder="Password" maxlength="20">
             </div>
             <div class="mb-3">
-                <label for="securityQuestion" class="form-label">Security Question</label>
+                <label for="securityQuestion" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Security Question</label>
                 <select name="securityQuestion" class="form-control" id="securityQuestion">
                     <option value="What is your Mother's Maiden Name?">What is your Mother's Maiden Name?</option>
                     <option value="What is your Pet's Name?">What is your Pet's Name?</option>
@@ -29,7 +29,7 @@
                 </select>
             </div>
             <div class="mb-3">
-                <label for="securityAnswer" class="form-label">Security Answer</label>
+                <label for="securityAnswer" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Security Answer</label>
                 <input name="securityAnswer" type="text" class="form-control" id="securityAnswer"
                     placeholder="Security Answer">
             </div>
