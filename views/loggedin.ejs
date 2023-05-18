@@ -1,9 +1,44 @@
-<%- include("templates/header") %> 
-    <h2 style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Welcome <%= username %>!</h2>
-    <div class="row mb-3 text-center">
-        <div class="col-md-4 themed-grid-col"><img class="img-fluid" src='/RE1.jpg'></div>
-        <div class="col-md-4 themed-grid-col"><img class="img-fluid" src='/RE2.png'></div>
-        <div class="col-md-4 themed-grid-col"><img class="img-fluid" src='/RE3.jpg'></div>
+<%- include("templates/header") %>
+<h2 style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8">
+  Welcome <%= username %>!
+</h2>
+<div class="container text-center">
+  <div class="row row-cols-1">
+    <div class="card text-bg-dark col"><a class="nav-link active" href="/search">
+      <img src="./img/wave.jpg" class="card-img rounded-5 " alt="..." height="350px" width="70%" />
+      <div class="card-img-overlay outlined-text">
+        <h5 class="card-title">Discover</h5>
+        <p class="card-text">
+          Discover new music and expand your library!
+        </p>
+      </div>
     </div>
-    <h2><a href="/logout"><button type="button" class="btn btn-primary btn-lg">Log Out</button></a></h2>
-<%- include("templates/footer") %> 
+    </a>
+    <div class="card text-bg-dark col"><a class="nav-link active" href="/favourites">
+        <img src="./img/love.jpg" class="card-img rounded-5" alt="..." height="350px" width="70%" />
+        <div class="card-img-overlay outlined-text">
+          <h5 class="card-title">Favourites</h5>
+          <p class="card-text">
+            Take a look at your favourite songs and add/remove them at your discression! 
+          </p>
+        </div>
+      </div>
+    </a>
+      <div class="card text-bg-dark col"><a class="nav-link active" href="/playlists">
+        <img src="./img/playlists.jpg" class="card-img rounded-5" alt="..." height="350px" width="70%" />
+        <div class="card-img-overlay outlined-text">
+          <h5 class="card-title">Plalists</h5>
+          <p class="card-text">
+            Create and edit your own custiomized playlists!
+          </p>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+<h2>
+  <a href="/logout"
+    ><button type="button" class="btn btn-primary btn-lg">Log Out</button></a
+  >
+</h2>
+<%- include("templates/footer") %>
