@@ -33,7 +33,18 @@
                 <input name="securityAnswer" type="text" class="form-control" id="securityAnswer"
                     placeholder="Security Answer">
             </div>
-            <button class="btn btn-outline-primary">Submit</button>
+            <% if (errorMessage) { %>
+                <div class="error-container" style="display: flex; justify-content: center;">
+                    <div class="alert alert-danger shake" style="max-width: 300px;">
+                        <p>
+                            <%= errorMessage %>
+                        </p>
+                    </div>
+                </div>
+                <% } %>
+
+
+                    <button class="btn btn-outline-primary">Submit</button>
         </form>
     </div>
     <%- include("templates/footer") %>

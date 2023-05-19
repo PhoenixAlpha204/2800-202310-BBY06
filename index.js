@@ -51,6 +51,7 @@ app.use(session({
 
 function isAuthenticated(req, res, next) {
     if (req.session.authenticated) {
+        console.log("logged in");
         res.redirect("/loggedin");
     } else {
         next();
@@ -61,6 +62,7 @@ function sessionValidation(req, res, next) {
     if (req.session.authenticated) {
         next();
     } else {
+        console.log("not logged in");
         res.redirect('/login');
     }
 }
@@ -81,27 +83,23 @@ app.get("/", isAuthenticated, (req, res) => {
 });
 
 app.get("/createUser", (req, res) => {
-    res.render("createUser");
+    const errorMessage = req.query.errorMessage || "";
+    res.render("createUser", { errorMessage: errorMessage });
 });
 
 app.get("/login", (req, res) => {
-    res.render("login");
+    const errorMessage = req.query.errorMessage || "";
+    res.render("login", { errorMessage: errorMessage });
 });
 
-app.get("/loginErrorUser", (req, res) => {
-    res.render("loginErrorUser");
-});
-
-app.get("/loginErrorPassword", (req, res) => {
-    res.render("loginErrorPassword");
-});
-
+// Submitting a new user
 app.post("/submitUser", async (req, res) => {
-    var username = req.body.username;
+    var username = req.body.username.toLowerCase();
     var password = req.body.password;
     var email = req.body.email;
     var securityQuestion = req.body.securityQuestion;
     var securityAnswer = req.body.securityAnswer;
+    var errorMessage = "";
 
     const schema = Joi.object(
         {
@@ -115,13 +113,29 @@ app.post("/submitUser", async (req, res) => {
     const validationResult = schema.validate({ username, email, password, securityAnswer });
     if (validationResult.error != null) {
         console.log(validationResult.error);
-        res.redirect("/createUser");
+        errorMessage = "Invalid input. Please try again.";
+        res.redirect("/createUser?errorMessage=" + encodeURIComponent(errorMessage));
+        return;
+    }
+
+    const existingUser = await userCollection.findOne({ username: username });
+    if (existingUser) {
+        errorMessage = "Username already exists";
+        console.log("Username already exists");
+        res.redirect("/createUser?errorMessage=" + encodeURIComponent(errorMessage));
+        return;
+    }
+
+    const existingEmail = await userCollection.findOne({ email: email });
+    if (existingEmail) {
+        errorMessage = "Email already exists";
+        console.log("Email already exists");
+        res.redirect("/createUser?errorMessage=" + encodeURIComponent(errorMessage));
         return;
     }
 
     var hashedPassword = await bcrypt.hash(password, saltRounds);
     var hashedSecurityAnswer = await bcrypt.hash(securityAnswer, saltRounds);
-
 
     await userCollection.insertOne({
         username: username,
@@ -135,20 +149,26 @@ app.post("/submitUser", async (req, res) => {
 
     req.session.authenticated = true;
     req.session.username = username;
+    req.session.user_type = 'user';
     req.session.cookie.maxAge = expireTime;
+    
 
     res.redirect("/loggedin");
 });
 
+// Logging in
 app.post("/loggingin", async (req, res) => {
-    var username = req.body.username;
+    var username = req.body.username.toLowerCase();
     var password = req.body.password;
+    var errorMessage = "";
+
 
     const schema = Joi.string().max(20).required();
     const validationResult = schema.validate(username);
     if (validationResult.error != null) {
         console.log(validationResult.error);
-        res.redirect("/login");
+        errorMessage = "Invalid input. Please try again.";
+        res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
         return;
     }
     const result = await userCollection.find({ username: username }).project({ username: 1, password: 1, user_type: 1, _id: 1 }).toArray();
@@ -156,7 +176,8 @@ app.post("/loggingin", async (req, res) => {
     console.log(result);
     if (result.length != 1) {
         console.log("user not found");
-        res.redirect("/loginErrorUser");
+        errorMessage = "Username not found. Please try again.";
+        res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
         return;
     }
     if (await bcrypt.compare(password, result[0].password)) {
@@ -166,11 +187,14 @@ app.post("/loggingin", async (req, res) => {
         req.session.user_type = result[0].user_type;
         req.session.cookie.maxAge = expireTime;
 
-        res.redirect("/loggedIn");
+        req.session.save(() => {
+            res.redirect("/loggedin");
+        });
         return;
     } else {
         console.log("incorrect password");
-        res.redirect("/loginErrorPassword");
+        errorMessage = "Incorrect password. Did you forget your password? Click the \"Forgot Password\" button to reset it";
+        res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
         return;
     }
 });
@@ -186,22 +210,20 @@ app.get("/loggedin", sessionValidation, (req, res) => {
 
 app.get("/profile", sessionValidation, async (req, res) => {
     var username = req.session.username;
-        const result = await userCollection.find({username: username}).project({ username: 1, email: 1, securityQuestion: 1, _id: 1 }).toArray();
-        console.log(result);
-        if (result.length != 1) {
-            console.log("user not found");
-            res.redirect("/loginErrorUser");
-            return;
-        } else {
-            const user = result[0];
-            res.render("profile", { username: username, email: user.email, securityQuestion: user.securityQuestion });
-            return;
-        }
+    const result = await userCollection.find({ username: username }).project({ username: 1, email: 1, securityQuestion: 1, _id: 1 }).toArray();
+    console.log(result);
+    if (result.length != 1) {
+        console.log("user not found");
+        res.redirect("/loginErrorUser");
+        return;
+    } else {
+        const user = result[0];
+        res.render("profile", { username: username, email: user.email, securityQuestion: user.securityQuestion });
+        return;
+    }
 
 
 });
-
-
 
 app.get('/forgotPassword', (req, res) => {
     res.render("forgotPassword");
@@ -272,7 +294,6 @@ app.get('/resetPassword', (req, res) => {
 app.get('/resetPasswordError', (req, res) => {
     res.render("resetPasswordError");
 });
-
 
 app.post('/checkSecurityQuestion', async (req, res) => {
     var email = req.body.email;
@@ -415,7 +436,7 @@ app.post("/searchSong", async (req, res) => {
     });
     var count = 0;
     list.forEach((song) => {
-        song.formattedName.forEach((name) => {  
+        song.formattedName.forEach((name) => {
             searchTerm.forEach((term) => {
                 if (name.match(new RegExp(term, 'g'))) {
                     count += term.length / name.length;
