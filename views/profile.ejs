@@ -1,42 +1,30 @@
 <%- include("templates/header") %> 
-
-
-<div class="container px-4 py-5" id="icon-grid">
-    <h2 class="pb-2 border-bottom">Profile</h2>
-
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 py-5">
-      <div class="col d-flex align-items-start">
+<h2 class="pb-2 border-bottom border-info" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Profile</h2>
+<div class="container px-4 py-5 " id="icon-grid">
+    <img src="404image" class="rounded-circle" onerror="this.src='./img/placeholder-pfp.jpg';" width="200" height="200">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3  py-5 ">
+      <div class="col  align-items-start justify-content-center">
         <svg class="bi text-body-secondary flex-shrink-0 me-3" width="1.75em" height="1.75em"><use xlink:href="#bootstrap"></use></svg>
         <div>
-          <h3 class="fw-bold mb-0 fs-4">Username</h3>
-          <p><%=username %></p>
+          <h3 class="fw-bold mb-0 fs-4 " style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Username</h3>
+          <p style="color: #16bac5;"><%=username %></p>
         </div>
       </div>
-      <div class="col d-flex align-items-start">
+      <div class="col  align-items-start justify-content-center">
         <svg class="bi text-body-secondary flex-shrink-0 me-3" width="1.75em" height="1.75em"><use xlink:href="#cpu-fill"></use></svg>
         <div>
-          <h3 class="fw-bold mb-0 fs-4">Email</h3>
-          <p><%=email %></p>
+          <h3 class="fw-bold mb-0 fs-4" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Email</h3>
+          <p style="color: #16bac5;"><%=email %></p>
           
         </div>
       </div>
-      <div class="col d-flex align-items-start">
+      <div class="col align-items-start justify-content-center">
         <svg class="bi text-body-secondary flex-shrink-0 me-3" width="1.75em" height="1.75em"><use xlink:href="#calendar3"></use></svg>
         <div>
-          <h3 class="fw-bold mb-0 fs-4">Security Question</h3>
-          <p><%=securityQuestion %></p>
+          <h3 class="fw-bold mb-0 fs-4" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Security Question</h3>
+          <p style="color: #16bac5;"><%=securityQuestion %></p>
         </div>
       </div>
-      <div class="col d-flex align-items-start">
-        <svg class="bi text-body-secondary flex-shrink-0 me-3" width="1.75em" height="1.75em"><use xlink:href="#home"></use></svg>
-        <div>
-          <h3 class="fw-bold mb-0 fs-4">Password</h3>
-          <p>Placeholder</p>
-        </div>
-      </div>
-
-  
-
     </div>
   </div>
 <%- include("templates/footer") %> 

@@ -1,0 +1,18 @@
+<%- include("templates/header") %> 
+<h2>Filters</h2>
+<br/><br/>
+<div class="mb-3">
+    <form action="/submitFilters" method="post">
+        <div class="mb-3">
+            <label for="artist" class="form-label">Artist</label>
+            <input name="artist" type="text" class="form-control" id="artist" placeholder="Artist:">
+        </div>
+        <div class="mb-3">
+            <label for="album" class="form-label">Album</label>
+            <input name="album" type="text" class="form-control" id="album" placeholder="Album:">
+        </div>
+        <button class="btn btn-outline-primary" type="submit">Submit</button>
+    </form>
+    <br/>
+</div>
+<%- include("templates/footer") %> 

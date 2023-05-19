@@ -1,17 +1,17 @@
 <%- include("templates/header") %>
-    Please answer your security question to reset your password.
+    <h2 style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Please answer your security question to reset your password.</h2>
     <br><br>
     <form action='/checkSecurityQuestion' method='post'>
         <div class="mb-3">
 
             <label name="<%=securityQuestion%>" for="securityQuestion" class="form-label">
-                <%=securityQuestion%>
+                <h3><%=securityQuestion%></h3>
             </label>
         </div>
         <div class="mb-3">
-            <label for="securityAnswer" class="form-label">Security Answer</label>
+            <label for="securityAnswer" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Security Answer</label>
             <input name='securityAnswer' type="text" class="form-control" id="securityAnswer"
-                placeholder='Answer'></input>
+                placeholder='Answer' autofocus></input>
         </div>
         <input name='email' type="hidden" value="<%= email %>"></input>
         <button class="btn btn-outline-primary">Submit</button>
