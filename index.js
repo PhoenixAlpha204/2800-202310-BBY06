@@ -502,64 +502,104 @@ app.get("/search", sessionValidation, (req, res) => {
   res.render("search");
 });
 
-app.post("/searchSong", async (req, res) => {
-  var searchTerm;
-  if (req.body.song != null) {
-    searchTerm = req.body.song;
-  } else {
-    searchTerm = req.query.q;
-  }
-  console.log(searchTerm);
-  const result = await userCollection
-    .find({ username: req.session.username })
-    .project({ searchHistory: 1, _id: 1 })
-    .toArray();
-  if (result[0].searchHistory == null) {
-    result[0].searchHistory = [];
-  }
-  if (result[0].searchHistory[0] != searchTerm) {
-    result[0].searchHistory.unshift(searchTerm);
-    if (result[0].searchHistory.length > 5) {
-      result[0].searchHistory.pop();
-    }
-    console.log(result[0].searchHistory);
-  }
-  await userCollection.updateOne(
-    { _id: result[0]._id },
-    { $set: { searchHistory: result[0].searchHistory } }
-  );
-  searchTerm = formatSearch(searchTerm);
-  const songCollection = database
-    .db(mongodb_database)
-    .collection("songs_dummy");
-  var list = await songCollection.find().project({ name: 1 }).toArray();
-  list.forEach((song) => {
-    song.formattedName = formatSearch(song.name);
-    song.count = 0;
-  });
-  var count = 0;
-  list.forEach((song) => {
-    song.formattedName.forEach((name) => {
-      searchTerm.forEach((term) => {
-        if (name.match(new RegExp(term, "g"))) {
-          count += term.length / name.length;
+app.post("/searchSong", sessionValidation, async (req, res) => {
+    if (req.query.artist != undefined || req.query.album != undefined) {
+        var list = [...req.session.searchResults];
+        if (req.query.artist != undefined) {
+            var artist = req.query.artist.replace(/_/g, ' ');
+            artist = formatSearch(artist);
+            for (var i = 0; i < list.length; i++) {
+                var contains = false;
+                var artists = list[i].artist;
+                artists.forEach((name) => {
+                    var formattedName = formatSearch(name);
+                    formattedName.forEach((part) => {
+                        artist.forEach((term) => {
+                            if (part.match(new RegExp(term, 'g'))) {
+                                contains = true;
+                            }
+                        });
+                    });
+                });
+                if (!contains) {
+                    list.splice(i, 1);
+                    i--;
+                }
+            }
         }
-      });
-      song.count += count / song.formattedName.length;
-      count = 0;
-    });
-  });
-  list = list.sort(function (a, b) {
-    return b.count - a.count;
-  });
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].count === 0) {
-      list.splice(i, 1);
-      i--;
+        if (req.query.album != undefined) {
+            var album = req.query.album.replace(/_/g, ' ');
+            album = formatSearch(album);
+            for (var i = 0; i < list.length; i++) {
+                var albumName = formatSearch(list[i].album);
+                var contains = false;
+                albumName.forEach((name) => {
+                    album.forEach((term) => {
+                        if (name.match(new RegExp(term, 'g'))) {
+                            contains = true;
+                        }
+                    });
+                });
+                if (!contains) {
+                    list.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        console.log(req.session.searchResults);
+        res.render("results", { results: list });
+    } else {
+        var searchTerm;
+        if (req.body.song != null) {
+            searchTerm = req.body.song;
+        } else {
+            searchTerm = req.query.q;
+        }
+        const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+        if (result[0].searchHistory == null) {
+            result[0].searchHistory = [];
+        }
+        if (result[0].searchHistory[0] != searchTerm) {
+            result[0].searchHistory.unshift(searchTerm);
+            if (result[0].searchHistory.length > 5) {
+                result[0].searchHistory.pop();
+            }
+            console.log(result[0].searchHistory);
+        }
+        await userCollection.updateOne({ _id: result[0]._id }, { $set: { searchHistory: result[0].searchHistory } });
+        searchTerm = formatSearch(searchTerm);
+        const songCollection = database.db(mongodb_database).collection("songs_dummy");
+        var list = await songCollection.find().project({ name: 1, artist: 1, album: 1 }).toArray();
+        list.forEach((song) => {
+            song.formattedName = formatSearch(song.name);
+            song.count = 0;
+        });
+        var count = 0;
+        list.forEach((song) => {
+            song.formattedName.forEach((name) => {  
+                searchTerm.forEach((term) => {
+                    if (name.match(new RegExp(term, 'g'))) {
+                        count += term.length / name.length;
+                    }
+                });
+                song.count += count / song.formattedName.length;
+                count = 0;
+            });
+        });
+        list = list.sort(function (a, b) {
+            return b.count - a.count;
+        });
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].count === 0) {
+                list.splice(i, 1);
+                i--;
+            }
+        }
+        req.session.searchTerm = searchTerm;
+        req.session.searchResults = list;
+        console.log(req.session.searchResults);
+        res.render("results", { results: list });
     }
-  }
-  console.log(list);
-  res.render("results", { results: list });
 });
 
 //this function sourced from: https://astromacguffin.com/ref/id/62dc488124d8b5752194eccd
@@ -607,6 +647,21 @@ app.post("/searchHistory", async (req, res) => {
     .project({ searchHistory: 1, _id: 1 })
     .toArray();
   res.render("history", { searches: result[0].searchHistory });
+});
+
+app.get("/filters", function(req, res) {
+    res.render("filters");
+});
+
+app.post("/submitFilters", function(req, res) {
+    var artist = req.body.artist.replace(/ /g, '_');
+    var album = req.body.album.replace(/ /g, '_');
+    if (artist != "" || album != "") {
+        res.redirect(307, `/searchSong?artist=${artist}&album=${album}`);
+    } else {
+        var searchTerm = req.session.searchTerm;
+        res.redirect(307, `/searchSong?q=${searchTerm}`);
+    }
 });
 
 app.use(express.static(__dirname + "/public"));
