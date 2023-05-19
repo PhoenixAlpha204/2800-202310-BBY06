@@ -1,21 +1,29 @@
 <%- include("templates/header") %> 
-    <h2style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Results</h2>
-    <br/><br/>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-        <div class="list-group">
-            <% for(i = 0; i < results.length; i++) { %>
-                <div class="list-group-item" style="margin-bottom: 10px;">
-                    <h4 class="d-flex justify-content-start"> <%= results[i].name %> </h4>
-                    <div class="rectangle" style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
-                        <h4>[Spotify Embed Placeholder]</h4>
-                    </div>
-                    <br/>
-                    <div class="d-flex justify-content-end">
-                        <span class="material-icons" style="font-size: 30pt; margin-right: 10px;">thumb_up</span>
-                        <span class="material-icons" style="font-size: 30pt;">thumb_down</span>
-                    </div>
+<h2 style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Results</h2>
+<br/><br/>
+<div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+    <div class="list-group">
+        <% for(i = 0; i < results.length; i++) { %>
+            <div class="list-group-item" style="margin-bottom: 10px;">
+                <h4 class="d-flex justify-content-start"> <%= results[i].name %> </h4>
+                <div class="rectangle" style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
+                    <h4>[Spotify Embed Placeholder]</h4>
                 </div>
-            <% } %>
-        </div>
+                <br/>
+                <div class="d-flex justify-content-end">
+                    <span class="material-icons" style="font-size: 30pt; margin-right: 10px;">thumb_up</span>
+                    <span class="material-icons" style="font-size: 30pt;">thumb_down</span>
+                </div>
+            </div>
+        <% } %>
+        <% if (results.length === 0) { %>
+            <h4 class="d-flex justify-content-center"> No Results Found </h4>
+        <% } %>
     </div>
+</div>
+<div class="filterSort container d-flex justify-content-end">
+    <button type="button" onclick="window.location.href='/filters'" class="btn btn-primary btn-xl" style="width: 70px; height: 70px; padding: 16px 10px; border-radius: 35px; text-align: center; position: absolute; bottom: 90px;">
+        <span class="material-icons" style="font-size: 30pt">filter_alt</span>
+    </button>
+</div>
 <%- include("templates/footer") %>
