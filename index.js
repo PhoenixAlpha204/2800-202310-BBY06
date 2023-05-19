@@ -194,6 +194,24 @@ app.get("/loggedin", sessionValidation, (req, res) => {
   res.render(template, data);
 });
 
+app.get("/dataHistory", sessionValidation, (req, res) => {
+  var username = req.session.username;
+  var template = "dataHistory.ejs";
+  var data = {
+    username: username,
+  };
+  res.render(template, data);
+});
+
+app.get("/userSettings", sessionValidation, (req, res) => {
+  var username = req.session.username;
+  var template = "userSettings.ejs";
+  var data = {
+    username: username,
+  };
+  res.render(template, data);
+});
+
 app.get("/favourites", sessionValidation, (req, res) => {
     var username = req.session.username;
     var template = "favourites.ejs";
@@ -212,6 +230,7 @@ app.get("/favourites", sessionValidation, (req, res) => {
     res.render(template, data);
   });
 
+
 app.get("/profile", sessionValidation, async (req, res) => {
   var username = req.session.username;
   const result = await userCollection
@@ -226,6 +245,28 @@ app.get("/profile", sessionValidation, async (req, res) => {
   } else {
     const user = result[0];
     res.render("profile", {
+      username: username,
+      email: user.email,
+      securityQuestion: user.securityQuestion,
+    });
+    return;
+  }
+});
+
+app.get("/profileUser", sessionValidation, async (req, res) => {
+  var username = req.session.username;
+  const result = await userCollection
+    .find({ username: username })
+    .project({ username: 1, email: 1, securityQuestion: 1, _id: 1 })
+    .toArray();
+  console.log(result);
+  if (result.length != 1) {
+    console.log("user not found");
+    res.redirect("/loginErrorUser");
+    return;
+  } else {
+    const user = result[0];
+    res.render("profileUser", {
       username: username,
       email: user.email,
       securityQuestion: user.securityQuestion,
