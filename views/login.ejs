@@ -3,12 +3,22 @@
     <form action='/loggingin' method='post'>
         <div class="mb-3">
             <label for="formGroupExampleInput" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Username</label>
-            <input name='username' type="text" class="form-control" id="formGroupExampleInput" placeholder="username">
+            <input name='username' type="text" class="form-control" id="formGroupExampleInput" placeholder="username" autofocus>
           </div>
           <div class="mb-3">
             <label for="formGroupExampleInput2" class="form-label" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Password</label>
             <input name='password' type="password" class="form-control" id="formGroupExampleInput2" placeholder="password">
           </div>
+          <% if (errorMessage) { %>
+            <div class="error-container" style="display: flex; justify-content: center;">
+                <div class="alert alert-danger shake" style="max-width: 300px;">
+                    <p>
+                        <%= errorMessage %>
+                    </p>
+                </div>
+            </div>
+            <% } %>
+
     <button class="btn btn-outline-primary">Submit</button>
     </form>
     <a href="/forgotPassword">Forgot Password?</a>
