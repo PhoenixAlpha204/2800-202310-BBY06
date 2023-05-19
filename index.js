@@ -97,7 +97,11 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/profileUser", (req, res) => {
+  if (!req.session.authenticated) {
+    res.redirect("/");
+  } else {
   res.render("profileUser");
+  }
 });
 
 app.get("/login", (req, res) => {
