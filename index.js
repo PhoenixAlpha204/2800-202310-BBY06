@@ -53,17 +53,19 @@ app.use(
 
 function isAuthenticated(req, res, next) {
   if (req.session.authenticated) {
+    console.log("logged in");
     res.redirect("/loggedin");
   } else {
     next();
   }
-}
+};
 
 function sessionValidation(req, res, next) {
   if (req.session.authenticated) {
     next();
   } else {
-    res.redirect("/login");
+    console.log("not logged in");
+    res.redirect('/login');
   }
 }
 
@@ -78,35 +80,45 @@ function adminAuthorization(req, res, next) {
 }
 
 app.get("/", isAuthenticated, (req, res) => {
+  if (req.session.authenticated) {
+    res.redirect("/loggedin");
+  }
   res.render("index");
 });
 
 app.get("/createUser", (req, res) => {
-  res.render("createUser");
+  const errorMessage = req.query.errorMessage || "";
+  res.render("createUser", { errorMessage: errorMessage });
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");
+  const errorMessage = req.query.errorMessage || "";
+  res.render("login", { errorMessage: errorMessage });
 });
 
 app.get("/profileUser", (req, res) => {
+  if (!req.session.authenticated) {
+    res.redirect("/");
+  } else {
   res.render("profileUser");
+  }
 });
 
-app.get("/loginErrorUser", (req, res) => {
-  res.render("loginErrorUser");
+app.get("/login", (req, res) => {
+  const errorMessage = req.query.errorMessage || "";
+  res.render("login", { errorMessage: errorMessage });
 });
 
-app.get("/loginErrorPassword", (req, res) => {
-  res.render("loginErrorPassword");
-});
-
+// Submitting a new user
 app.post("/submitUser", async (req, res) => {
-  var username = req.body.username;
+  var securityQuestion = req.body.securityQuestion;
+  var securityAnswer = req.body.securityAnswer;
+  var username = req.body.username.toLowerCase();
   var password = req.body.password;
   var email = req.body.email;
   var securityQuestion = req.body.securityQuestion;
   var securityAnswer = req.body.securityAnswer;
+  var errorMessage = "";
 
   const schema = Joi.object({
     username: Joi.string().alphanum().max(20).required(),
@@ -115,15 +127,27 @@ app.post("/submitUser", async (req, res) => {
     securityAnswer: Joi.string().max(20).required(),
   });
 
-  const validationResult = schema.validate({
-    username,
-    email,
-    password,
-    securityAnswer,
-  });
+  const validationResult = schema.validate({ username, email, password, securityAnswer });
   if (validationResult.error != null) {
     console.log(validationResult.error);
-    res.redirect("/createUser");
+    errorMessage = "Invalid input. Please try again.";
+    res.redirect("/createUser?errorMessage=" + encodeURIComponent(errorMessage));
+    return;
+  }
+
+  const existingUser = await userCollection.findOne({ username: username });
+  if (existingUser) {
+    errorMessage = "Username already exists";
+    console.log("Username already exists");
+    res.redirect("/createUser?errorMessage=" + encodeURIComponent(errorMessage));
+    return;
+  }
+
+  const existingEmail = await userCollection.findOne({ email: email });
+  if (existingEmail) {
+    errorMessage = "Email already exists";
+    console.log("Email already exists");
+    res.redirect("/createUser?errorMessage=" + encodeURIComponent(errorMessage));
     return;
   }
 
@@ -142,31 +166,33 @@ app.post("/submitUser", async (req, res) => {
 
   req.session.authenticated = true;
   req.session.username = username;
+  req.session.user_type = 'user';
   req.session.cookie.maxAge = expireTime;
 
   res.redirect("/loggedin");
 });
 
+// Logging in
 app.post("/loggingin", async (req, res) => {
-  var username = req.body.username;
+  var username = req.body.username.toLowerCase();
   var password = req.body.password;
+  var errorMessage = "";
 
   const schema = Joi.string().max(20).required();
   const validationResult = schema.validate(username);
   if (validationResult.error != null) {
     console.log(validationResult.error);
-    res.redirect("/login");
+    errorMessage = "Invalid input. Please try again.";
+    res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
     return;
   }
-  const result = await userCollection
-    .find({ username: username })
-    .project({ username: 1, password: 1, user_type: 1, _id: 1 })
-    .toArray();
+  const result = await userCollection.find({ username: username }).project({ username: 1, password: 1, user_type: 1, _id: 1 }).toArray();
 
   console.log(result);
   if (result.length != 1) {
     console.log("user not found");
-    res.redirect("/loginErrorUser");
+    errorMessage = "Username not found. Please try again.";
+    res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
     return;
   }
   if (await bcrypt.compare(password, result[0].password)) {
@@ -176,11 +202,14 @@ app.post("/loggingin", async (req, res) => {
     req.session.user_type = result[0].user_type;
     req.session.cookie.maxAge = expireTime;
 
-    res.redirect("/loggedIn");
+    req.session.save(() => {
+      res.redirect("/loggedin");
+    });
     return;
   } else {
     console.log("incorrect password");
-    res.redirect("/loginErrorPassword");
+    errorMessage = "Incorrect password. Did you forget your password? Click the \"Forgot Password\" button to reset it";
+    res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
     return;
   }
 });
@@ -213,22 +242,22 @@ app.get("/userSettings", sessionValidation, (req, res) => {
 });
 
 app.get("/favourites", sessionValidation, (req, res) => {
-    var username = req.session.username;
-    var template = "favourites.ejs";
-    var data = {
-      username: username,
-    };
-    res.render(template, data);
-  });
+  var username = req.session.username;
+  var template = "favourites.ejs";
+  var data = {
+    username: username,
+  };
+  res.render(template, data);
+});
 
-  app.get("/playlists", sessionValidation, (req, res) => {
-    var username = req.session.username;
-    var template = "playlists.ejs";
-    var data = {
-      username: username,
-    };
-    res.render(template, data);
-  });
+app.get("/playlists", sessionValidation, (req, res) => {
+  var username = req.session.username;
+  var template = "playlists.ejs";
+  var data = {
+    username: username,
+  };
+  res.render(template, data);
+});
 
 
 app.get("/profile", sessionValidation, async (req, res) => {
@@ -276,7 +305,8 @@ app.get("/profileUser", sessionValidation, async (req, res) => {
 });
 
 app.get("/forgotPassword", (req, res) => {
-  res.render("forgotPassword");
+  const errorMessage = req.query.errorMessage || "";
+  res.render("forgotPassword", { errorMessage: errorMessage });
 });
 
 app.get("/about", (req, res) => {
@@ -308,14 +338,17 @@ app.post("/submitEmail", (req, res) => {
 
 app.post("/checkEmail", async (req, res) => {
   var email = req.body.email;
+  let errorMessage = ""; // Declare and initialize the errorMessage variable
+
   const result = await userCollection
     .find({ email: email })
     .project({ username: 1, securityQuestion: 1, _id: 1 })
     .toArray();
   console.log(result);
   if (result.length != 1) {
+    errorMessage = "Email not found. Please try again.";
     console.log("user not found");
-    res.redirect("/forgotPasswordError");
+    res.redirect("/forgotPassword?errorMessage=" + encodeURIComponent(errorMessage));
     return;
   } else {
     const token = crypto.randomBytes(20).toString("hex");
@@ -330,16 +363,16 @@ app.post("/checkEmail", async (req, res) => {
       email: email,
       securityQuestion: result[0].securityQuestion,
       token: token,
+      errorMessage: errorMessage // Pass the errorMessage variable to the res.render() method
     });
   }
 });
 
-app.get("/forgotPasswordError", (req, res) => {
-  res.render("forgotPasswordError");
-});
 
 app.get("/securityQuestion", (req, res) => {
-  res.render("securityQuestion");
+  const errorMessage = req.query.errorMessage || "";  
+  const securityQuestion = req.query.securityQuestion || ""; // Retrieve securityQuestion from query parameter if needed
+  res.render("securityQuestion", { errorMessage: errorMessage, securityQuestion: securityQuestion });
 });
 
 app.get("/securityQuestionError", (req, res) => {
@@ -354,66 +387,12 @@ app.get("/resetPasswordError", (req, res) => {
   res.render("resetPasswordError");
 });
 
-app.post("/checkSecurityQuestion", async (req, res) => {
-  var email = req.body.email;
-  var securityAnswer = req.body.securityAnswer;
-  var token = req.body.token;
-
-  const result = await userCollection
-    .find({ email: email })
-    .project({
-      username: 1,
-      securityAnswer: 1,
-      resetPasswordExpires: 1,
-      resetPasswordToken: 1,
-      _id: 1,
-    })
-    .toArray();
-  console.log(result);
-
-  if (securityAnswer == null) {
-    res.redirect("/securityQuestionError");
-    return;
-  }
-  if (result.length != 1) {
-    console.log("user not found");
-    res.redirect("/securityQuestionError");
-    return;
-  } else {
-    const user = result[0];
-    if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
-      console.log("correct security answer");
-      if (Date.now() > user.resetPasswordExpires) {
-        console.log("token expired");
-        res.redirect("/tokenExpired");
-        return;
-      } else {
-        console.log("token not expired");
-        res.render("resetPassword", { email: email, token: token });
-        return;
-      }
-    } else {
-      console.log("incorrect security answer");
-      res.redirect("/securityQuestionError");
-      return;
-    }
-  }
-});
-
-app.post("/resetPassword", async (req, res) => {
+app.post('/resetPassword', async (req, res) => {
   var email = req.body.email;
   var newPass = req.body.newPassword;
   var confirmPass = req.body.confirmPassword;
 
-  const result = await userCollection
-    .find({ email: email })
-    .project({
-      username: 1,
-      resetPasswordExpires: 1,
-      resetPasswordToken: 1,
-      _id: 1,
-    })
-    .toArray();
+  const result = await userCollection.find({ email: email }).project({ username: 1, resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 }).toArray();
   if (newPass == null || confirmPass == null) {
     res.redirect("/resetPasswordError");
     console.log("password not entered");
@@ -434,10 +413,7 @@ app.post("/resetPassword", async (req, res) => {
     } else {
       console.log("passwords match");
       var hashedPassword = await bcrypt.hash(newPass, saltRounds);
-      await userCollection.updateOne(
-        { email: email },
-        { $set: { password: hashedPassword } }
-      );
+      await userCollection.updateOne({ email: email }, { $set: { password: hashedPassword } });
       console.log("password updated");
       res.redirect("/login");
       return;
@@ -445,7 +421,52 @@ app.post("/resetPassword", async (req, res) => {
   }
 });
 
+// Define incorrectCount outside the route handler function
+var incorrectCount = 0;
+
+app.post('/checkSecurityQuestion', async (req, res) => {
+  var email = req.body.email;
+  var securityAnswer = req.body.securityAnswer;
+  var token = req.body.token;
+
+  const result = await userCollection
+      .find({ email: email })
+      .project({ username: 1, securityAnswer: 1, resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 })
+      .toArray();
+  console.log(result);
+
+  if (securityAnswer == null) {
+      res.redirect("/securityQuestionError");
+      return;
+  }
+  if (result.length != 1) {
+      console.log("user not found");
+      res.redirect("/securityQuestionError");
+      return;
+  } else {
+      const user = result[0];
+      if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
+          console.log("correct security answer");
+          if (Date.now() > user.resetPasswordExpires) {
+              console.log("token expired");
+              res.redirect("/tokenExpired");
+              return;
+          } else {
+              console.log("token not expired");
+              res.render("resetPassword", { email: email, token: token });
+              return;
+          }
+      } else {
+          console.log("incorrect security answer");
+          res.redirect("/securityQuestionError");
+          return;
+      }
+  }
+});
+
+
 const nodemailer = require("nodemailer");
+const { error } = require("console");
 
 app.get("/logout", (req, res) => {
   req.session.destroy();
@@ -502,64 +523,104 @@ app.get("/search", sessionValidation, (req, res) => {
   res.render("search");
 });
 
-app.post("/searchSong", async (req, res) => {
-  var searchTerm;
-  if (req.body.song != null) {
-    searchTerm = req.body.song;
-  } else {
-    searchTerm = req.query.q;
-  }
-  console.log(searchTerm);
-  const result = await userCollection
-    .find({ username: req.session.username })
-    .project({ searchHistory: 1, _id: 1 })
-    .toArray();
-  if (result[0].searchHistory == null) {
-    result[0].searchHistory = [];
-  }
-  if (result[0].searchHistory[0] != searchTerm) {
-    result[0].searchHistory.unshift(searchTerm);
-    if (result[0].searchHistory.length > 5) {
-      result[0].searchHistory.pop();
-    }
-    console.log(result[0].searchHistory);
-  }
-  await userCollection.updateOne(
-    { _id: result[0]._id },
-    { $set: { searchHistory: result[0].searchHistory } }
-  );
-  searchTerm = formatSearch(searchTerm);
-  const songCollection = database
-    .db(mongodb_database)
-    .collection("songs_dummy");
-  var list = await songCollection.find().project({ name: 1 }).toArray();
-  list.forEach((song) => {
-    song.formattedName = formatSearch(song.name);
-    song.count = 0;
-  });
-  var count = 0;
-  list.forEach((song) => {
-    song.formattedName.forEach((name) => {
-      searchTerm.forEach((term) => {
-        if (name.match(new RegExp(term, "g"))) {
-          count += term.length / name.length;
+app.post("/searchSong", sessionValidation, async (req, res) => {
+  if (req.query.artist != undefined || req.query.album != undefined) {
+    var list = [...req.session.searchResults];
+    if (req.query.artist != undefined) {
+      var artist = req.query.artist.replace(/_/g, ' ');
+      artist = formatSearch(artist);
+      for (var i = 0; i < list.length; i++) {
+        var contains = false;
+        var artists = list[i].artist;
+        artists.forEach((name) => {
+          var formattedName = formatSearch(name);
+          formattedName.forEach((part) => {
+            artist.forEach((term) => {
+              if (part.match(new RegExp(term, 'g'))) {
+                contains = true;
+              }
+            });
+          });
+        });
+        if (!contains) {
+          list.splice(i, 1);
+          i--;
         }
-      });
-      song.count += count / song.formattedName.length;
-      count = 0;
-    });
-  });
-  list = list.sort(function (a, b) {
-    return b.count - a.count;
-  });
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].count === 0) {
-      list.splice(i, 1);
-      i--;
+      }
     }
+    if (req.query.album != undefined) {
+      var album = req.query.album.replace(/_/g, ' ');
+      album = formatSearch(album);
+      for (var i = 0; i < list.length; i++) {
+        var albumName = formatSearch(list[i].album);
+        var contains = false;
+        albumName.forEach((name) => {
+          album.forEach((term) => {
+            if (name.match(new RegExp(term, 'g'))) {
+              contains = true;
+            }
+          });
+        });
+        if (!contains) {
+          list.splice(i, 1);
+          i--;
+        }
+      }
+    }
+    console.log(req.session.searchResults);
+    res.render("results", { results: list });
+  } else {
+    var searchTerm;
+    if (req.body.song != null) {
+      searchTerm = req.body.song;
+    } else {
+      searchTerm = req.query.q;
+    }
+    const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+    if (result[0].searchHistory == null) {
+      result[0].searchHistory = [];
+    }
+    if (result[0].searchHistory[0] != searchTerm) {
+      result[0].searchHistory.unshift(searchTerm);
+      if (result[0].searchHistory.length > 5) {
+        result[0].searchHistory.pop();
+      }
+      console.log(result[0].searchHistory);
+    }
+    await userCollection.updateOne({ _id: result[0]._id }, { $set: { searchHistory: result[0].searchHistory } });
+    searchTerm = formatSearch(searchTerm);
+    const songCollection = database.db(mongodb_database).collection("songs_dummy");
+    var list = await songCollection.find().project({ name: 1, artist: 1, album: 1 }).toArray();
+    list.forEach((song) => {
+      song.formattedName = formatSearch(song.name);
+      song.count = 0;
+    });
+    var count = 0;
+    list.forEach((song) => {
+      song.formattedName.forEach((name) => {
+        searchTerm.forEach((term) => {
+          if (name.match(new RegExp(term, 'g'))) {
+            count += term.length / name.length;
+          }
+        });
+        song.count += count / song.formattedName.length;
+        count = 0;
+      });
+    });
+    list = list.sort(function (a, b) {
+      return b.count - a.count;
+    });
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].count === 0) {
+        list.splice(i, 1);
+        i--;
+      }
+    }
+    req.session.searchTerm = searchTerm;
+    req.session.searchResults = list;
+    console.log(req.session.searchResults);
+    res.render("results", { results: list });
   }
-  console.log(list);
-  res.render("results", { results: list });
 });
 
 //this function sourced from: https://astromacguffin.com/ref/id/62dc488124d8b5752194eccd
@@ -607,6 +668,21 @@ app.post("/searchHistory", async (req, res) => {
     .project({ searchHistory: 1, _id: 1 })
     .toArray();
   res.render("history", { searches: result[0].searchHistory });
+});
+
+app.get("/filters", function (req, res) {
+  res.render("filters");
+});
+
+app.post("/submitFilters", function (req, res) {
+  var artist = req.body.artist.replace(/ /g, '_');
+  var album = req.body.album.replace(/ /g, '_');
+  if (artist != "" || album != "") {
+    res.redirect(307, `/searchSong?artist=${artist}&album=${album}`);
+  } else {
+    var searchTerm = req.session.searchTerm;
+    res.redirect(307, `/searchSong?q=${searchTerm}`);
+  }
 });
 
 app.use(express.static(__dirname + "/public"));
