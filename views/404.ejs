@@ -218,8 +218,6 @@
 
 <body>
     <!-- Header -->
-    <audio id="jumpSound" src="./sound/maro-jump-sound-effect_1.mp3"></audio>
-    <audio id="rickRoll" src="./sound/rick-roll.mp3"></audio>
     <div class="container">
       <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
         <div class="container-fluid">
@@ -285,7 +283,6 @@
             </button>
         </div>
 
-
     </div>
     <div>
         <footer class="d-flex flex-wrap container fixed-bottom justify-content-between align-items-center border-top border-info border-5 navbar2">
@@ -301,8 +298,13 @@
             <span style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">© 2023 Songgestions, Inc</span>
           </div>
         </footer>
+    </div>
       </body>
 <script>
+    // Block Jump Game Sounds
+    const jumpSound = new Audio("./sounds/jump.mp3");
+    const rickRoll = new Audio("./sounds/rickroll.mp3");
+
     // Block Jump Game Variables
     var character = document.getElementById("character");
     var block = document.getElementById("block");
@@ -346,14 +348,10 @@
                 gameElement.innerHTML = "";
                 gameElement.style.backgroundImage = "url('./img/rickroll.gif')";
                 gameElement.style.backgroundPosition = "center -50px";
-
-
-
+                
                 rickRoll.play();
                 isGameOver = true; // Set the game over state
                 document.getElementById("chat").style.display = "block"; // Show the chat div
-
-
 
             } else {
                 if (score > highScore) {
@@ -402,11 +400,6 @@
         location.reload();
 
     }
-
-
-
-
-
 
 </script>
 
