@@ -31,6 +31,19 @@ const songgestions_password = process.env.SONGGESTIONS_SUPPORT_PASSWORD;
 var { database } = include("databaseConnection");
 const userCollection = database.db(mongodb_database).collection("users");
 
+const navLinks = [
+    {name: "Recommendations", link: "/recommendationsTuning"},
+    {name: "Browse", link: "/search"},
+    {name: "Favourites", link: "/favourites"},
+    {name: "Playlists", link: "/playlists"},
+];
+const url = require("url");
+app.use("/", (req, res, next) => {
+    app.locals.navLinks = navLinks;
+    app.locals.currentUrl = url.parse(req.url).pathname;
+    next();
+});
+
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: false }));
@@ -524,8 +537,11 @@ app.get("/search", sessionValidation, (req, res) => {
 });
 
 app.post("/searchSong", sessionValidation, async (req, res) => {
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+  //if passed filters, filter previous results
   if (req.query.artist != undefined || req.query.album != undefined) {
     var list = [...req.session.searchResults];
+    //filter by artist
     if (req.query.artist != undefined) {
       var artist = req.query.artist.replace(/_/g, ' ');
       artist = formatSearch(artist);
@@ -548,6 +564,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
         }
       }
     }
+    //filter by album
     if (req.query.album != undefined) {
       var album = req.query.album.replace(/_/g, ' ');
       album = formatSearch(album);
@@ -567,8 +584,9 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
         }
       }
     }
-    console.log(req.session.searchResults);
-    res.render("results", { results: list });
+    var script = require('./scripts/recommendationsTuning.js');
+    res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0]});
+  //if no filters passed, get new results
   } else {
     var searchTerm;
     if (req.body.song != null) {
@@ -577,6 +595,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
       searchTerm = req.query.q;
     }
     const result = await userCollection.find({ username: req.session.username }).project({ searchHistory: 1, _id: 1 }).toArray();
+    //update user's search history with the new search term
     if (result[0].searchHistory == null) {
       result[0].searchHistory = [];
     }
@@ -591,6 +610,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
     searchTerm = formatSearch(searchTerm);
     const songCollection = database.db(mongodb_database).collection("songs_dummy");
     var list = await songCollection.find().project({ name: 1, artist: 1, album: 1 }).toArray();
+    //filter songs in the database based on the given name
     list.forEach((song) => {
       song.formattedName = formatSearch(song.name);
       song.count = 0;
@@ -616,10 +636,12 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
         i--;
       }
     }
+    //log everything for future filtering
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
     console.log(req.session.searchResults);
-    res.render("results", { results: list });
+    var script = require('./scripts/recommendationsTuning.js');
+    res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0] });
   }
 });
 
@@ -683,6 +705,74 @@ app.post("/submitFilters", function (req, res) {
     var searchTerm = req.session.searchTerm;
     res.redirect(307, `/searchSong?q=${searchTerm}`);
   }
+});
+
+app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
+    var script = require('./scripts/recommendationsTuning.js');
+    var songs = [];
+    const songCollection = database.db(mongodb_database).collection("songs_dummy");
+    var collectionSize = await songCollection.count();
+    var songIds = [undefined];
+    var temp;
+    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+    if (userLikesDislikes[0].likes == null || userLikesDislikes[0].dislikes == null) {
+        if (userLikesDislikes[0].likes == null) {
+            userLikesDislikes[0].likes = [];
+        }
+        if (userLikesDislikes[0].dislikes == null) {
+            userLikesDislikes[0].dislikes = [];
+        }
+        await userCollection.updateOne({ _id: userLikesDislikes[0]._id }, { $set: { likes: userLikesDislikes[0].likes, dislikes: userLikesDislikes[0].dislikes } });
+    }
+    for (let i = 0; i < 5; i++) {
+        var counter = 0;
+        while (songIds.includes(temp) || userLikesDislikes[0].likes.includes(temp) || userLikesDislikes[0].dislikes.includes(temp)) {
+            temp = Math.floor(Math.random() * collectionSize) + 1;
+            counter++;
+            if (counter >= 100) {
+                break;
+            }
+        }
+        if (counter >= 100) {
+            break;
+        }
+        songIds.push(temp);
+        let res = await songCollection.findOne({ _id: temp });
+        songs.push(res);
+    }
+    res.render("recommendationsTuning", { script: script, songs: songs, userLikesDislikes: userLikesDislikes[0]});
+});
+
+app.get('/like/:id', async (req, res) => {
+    var userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+    userLikesDislikes = userLikesDislikes[0];
+    var id = parseInt(req.params.id[0]);
+    if (userLikesDislikes.dislikes.includes(id)) {
+        userLikesDislikes.dislikes.splice(userLikesDislikes.dislikes.indexOf(id), 1);
+    }
+    if (userLikesDislikes.likes.includes(id)) {
+        userLikesDislikes.likes.splice(userLikesDislikes.likes.indexOf(id), 1);
+    } else {
+        userLikesDislikes.likes.push(id);
+    }
+    await userCollection.updateOne({ _id: userLikesDislikes._id }, { $set: { likes: userLikesDislikes.likes, dislikes: userLikesDislikes.dislikes } });
+    res.send("" + id);
+});
+
+app.get('/dislike/:id', async (req, res) => {
+    var userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+    userLikesDislikes = userLikesDislikes[0];
+    var id = parseInt(req.params.id[0]);
+    if (userLikesDislikes.likes.includes(id)) {
+        userLikesDislikes.likes.splice(userLikesDislikes.likes.indexOf(id), 1);
+    }
+    if (userLikesDislikes.dislikes.includes(id)) {
+        userLikesDislikes.dislikes.splice(userLikesDislikes.dislikes.indexOf(id), 1);
+    } else {
+        userLikesDislikes.dislikes.push(id);
+    }
+    await userCollection.updateOne({ _id: userLikesDislikes._id }, { $set: { likes: userLikesDislikes.likes, dislikes: userLikesDislikes.dislikes } });
+    res.send("" + id);
 });
 
 app.use(express.static(__dirname + "/public"));
