@@ -748,6 +748,22 @@ app.get('/like/:id', async (req, res) => {
     res.send("" + id);
 });
 
+app.get('/dislike/:id', async (req, res) => {
+    var userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+    userLikesDislikes = userLikesDislikes[0];
+    var id = parseInt(req.params.id[0]);
+    if (userLikesDislikes.likes.includes(id)) {
+        userLikesDislikes.likes.splice(userLikesDislikes.likes.indexOf(id), 1);
+    }
+    if (userLikesDislikes.dislikes.includes(id)) {
+        userLikesDislikes.dislikes.splice(userLikesDislikes.dislikes.indexOf(id), 1);
+    } else {
+        userLikesDislikes.dislikes.push(id);
+    }
+    await userCollection.updateOne({ _id: userLikesDislikes._id }, { $set: { likes: userLikesDislikes.likes, dislikes: userLikesDislikes.dislikes } });
+    res.send("" + id);
+});
+
 app.use(express.static(__dirname + "/public"));
 
 app.get("*", (req, res) => {

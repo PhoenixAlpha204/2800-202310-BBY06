@@ -11,10 +11,12 @@
                 <br/>
                 <div class="d-flex">
                     <span class="material-icons me-auto" style="font-size: 30pt;">star</span>
-                    <button type="button" class="likeButton" id=<%= songs[i]._id + "_like"%>>
+                    <button type="button" class="likeButton" id=<%= songs[i]._id + "_like"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: <%- script.liked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                     </button>
-                    <span class="material-icons" style="color: <%- script.disliked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">thumb_down</span>
+                    <button type="button" class="dislikeButton" id=<%= songs[i]._id + "_dislike"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: <%- script.disliked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">thumb_down</span>
+                    </button>
                 </div>
             </div>
         <% } %>
@@ -32,11 +34,41 @@
         } else if (color == "rgb(0, 0, 255)") {
             $(this).children("span").css("color", "black");
         }
+        var dislikeId = "#" + this.id[0] + "_dislike";
+        color = $(dislikeId).children("span").css("color");
+        if (color == "rgb(0, 0, 255)") {
+            $(dislikeId).children("span").css("color", "black");
+        }
     });
 
     function like(id) {
         axios.get(`/like/${id}`).then(function(response) {
             console.log(response);
+            return response();
+        }).catch(function(error) {
+            console.error(error);
+        });
+    };
+
+    $('body').on('click', '.dislikeButton', async function() {
+        await dislike(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "blue");
+        } else if (color == "rgb(0, 0, 255)") {
+            $(this).children("span").css("color", "black");
+        }
+        var likeId = "#" + this.id[0] + "_like";
+        color = $(likeId).children("span").css("color");
+        if (color == "rgb(0, 0, 255)") {
+            $(likeId).children("span").css("color", "black");
+        }
+    });
+
+    function dislike(id) {
+        axios.get(`/dislike/${id}`).then(function(response) {
+            console.log(response);
+            return(response);
         }).catch(function(error) {
             console.error(error);
         });
