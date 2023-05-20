@@ -21,6 +21,9 @@
             </div>
         <% } %>
     </div>
+    <% if (songs.length == 0) { %>
+        <p>You've rated everything!</p>
+    <% } %>
 </div>
 <p style="color: darkgray; font-style: italic;">Refresh to tune again with different songs</p>
 <br/>
@@ -44,7 +47,6 @@
     function like(id) {
         axios.get(`/like/${id}`).then(function(response) {
             console.log(response);
-            return response();
         }).catch(function(error) {
             console.error(error);
         });
@@ -68,7 +70,6 @@
     function dislike(id) {
         axios.get(`/dislike/${id}`).then(function(response) {
             console.log(response);
-            return(response);
         }).catch(function(error) {
             console.error(error);
         });

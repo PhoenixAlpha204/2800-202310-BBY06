@@ -722,8 +722,16 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
         await userCollection.updateOne({ _id: userLikesDislikes[0]._id }, { $set: { likes: userLikesDislikes[0].likes, dislikes: userLikesDislikes[0].dislikes } });
     }
     for (let i = 0; i < 5; i++) {
-        while (songIds.includes(temp)) {
+        var counter = 0;
+        while (songIds.includes(temp) || userLikesDislikes[0].likes.includes(temp) || userLikesDislikes[0].dislikes.includes(temp)) {
             temp = Math.floor(Math.random() * collectionSize) + 1;
+            counter++;
+            if (counter >= 100) {
+                break;
+            }
+        }
+        if (counter >= 100) {
+            break;
         }
         songIds.push(temp);
         let res = await songCollection.findOne({ _id: temp });
