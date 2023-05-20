@@ -537,6 +537,7 @@ app.get("/search", sessionValidation, (req, res) => {
 });
 
 app.post("/searchSong", sessionValidation, async (req, res) => {
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
   //if passed filters, filter previous results
   if (req.query.artist != undefined || req.query.album != undefined) {
     var list = [...req.session.searchResults];
@@ -583,7 +584,8 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
         }
       }
     }
-    res.render("results", { results: list });
+    var script = require('./scripts/recommendationsTuning.js');
+    res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0]});
   //if no filters passed, get new results
   } else {
     var searchTerm;
@@ -638,7 +640,8 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
     console.log(req.session.searchResults);
-    res.render("results", { results: list });
+    var script = require('./scripts/recommendationsTuning.js');
+    res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0] });
   }
 });
 
@@ -737,7 +740,7 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
         let res = await songCollection.findOne({ _id: temp });
         songs.push(res);
     }
-    res.render("recommendationsTuning", { script: script, songs: songs, userCollection: userCollection, userLikesDislikes: userLikesDislikes[0]});
+    res.render("recommendationsTuning", { script: script, songs: songs, userLikesDislikes: userLikesDislikes[0]});
 });
 
 app.get('/like/:id', async (req, res) => {
