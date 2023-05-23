@@ -547,15 +547,12 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
       artist = formatSearch(artist);
       for (var i = 0; i < list.length; i++) {
         var contains = false;
-        var artists = list[i].artist;
+        var artists = formatSearch(list[i].artist);
         artists.forEach((name) => {
-          var formattedName = formatSearch(name);
-          formattedName.forEach((part) => {
-            artist.forEach((term) => {
-              if (part.match(new RegExp(term, 'g'))) {
-                contains = true;
-              }
-            });
+          artist.forEach((term) => {
+            if (name.match(new RegExp(term, 'g'))) {
+              contains = true;
+            }
           });
         });
         if (!contains) {
@@ -584,7 +581,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
         }
       }
     }
-    var script = require('./scripts/recommendationsTuning.js');
+    var script = require('./scripts/likesDislikes.js');
     res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0]});
   //if no filters passed, get new results
   } else {
@@ -640,7 +637,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
     console.log(req.session.searchResults);
-    var script = require('./scripts/recommendationsTuning.js');
+    var script = require('./scripts/likesDislikes.js');
     res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0] });
   }
 });
@@ -708,7 +705,7 @@ app.post("/submitFilters", function (req, res) {
 });
 
 app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
-    var script = require('./scripts/recommendationsTuning.js');
+    var script = require('./scripts/likesDislikes.js');
     var songs = [];
     const songCollection = database.db(mongodb_database).collection("songs_dummy");
     var collectionSize = await songCollection.count();
