@@ -1,36 +1,32 @@
 <%- include("templates/header") %> 
-<h2 style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Results</h2>
-<br/><br/>
+<h2 class="border-bottom border-info pb-2" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Let's Tune Your Recommendations!</h2>
 <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
     <div class="list-group">
-        <% for(i = 0; i < results.length; i++) { %>
+        <% for(i = 0; i < songs.length; i++) { %>
             <div class="list-group-item">
-                <h4 class="d-flex justify-content-start"> <%= results[i].name %> </h4>
+                <h4 class="d-flex justify-content-start"> <%= songs[i].name %> </h4>
                 <div class="rectangle" style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
                     <h4>[Spotify Embed Placeholder]</h4>
                 </div>
                 <br/>
                 <div class="d-flex">
                     <span class="material-icons me-auto" style="font-size: 30pt;">star</span>
-                    <button type="button" class="likeButton" id=<%= results[i]._id + "_like"%> style="background: transparent; border: none;">
-                        <span class="material-icons" style="color: <%- script.liked(userLikesDislikes, results[i]._id) %>; font-size: 30pt; margin-right: 10px;">thumb_up</span>
+                    <button type="button" class="likeButton" id=<%= songs[i]._id + "_like"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: <%- script.liked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                     </button>
-                    <button type="button" class="dislikeButton" id=<%= results[i]._id + "_dislike"%> style="background: transparent; border: none;">
-                        <span class="material-icons" style="color: <%- script.disliked(userLikesDislikes, results[i]._id) %>; font-size: 30pt;">thumb_down</span>
+                    <button type="button" class="dislikeButton" id=<%= songs[i]._id + "_dislike"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: <%- script.disliked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">thumb_down</span>
                     </button>
                 </div>
             </div>
         <% } %>
-        <% if (results.length === 0) { %>
-            <h4 class="d-flex justify-content-center"> No Results Found </h4>
-        <% } %>
     </div>
+    <% if (songs.length == 0) { %>
+        <p>You've rated everything!</p>
+    <% } %>
 </div>
-<div class="filterSort container d-flex justify-content-end">
-    <button type="button" onclick="window.location.href='/filters'" class="btn btn-primary btn-xl" style="width: 70px; height: 70px; padding: 16px 10px; border-radius: 35px; text-align: center; position: absolute; bottom: 90px;">
-        <span class="material-icons" style="font-size: 30pt">filter_alt</span>
-    </button>
-</div>
+<p style="color: darkgray; font-style: italic;">Refresh to tune again with different songs</p>
+<br/>
 <script>
     $('body').on('click', '.likeButton', async function() {
         await like(this.id);
@@ -78,4 +74,4 @@
         });
     };
 </script>
-<%- include("templates/footer") %>
+<%- include("templates/footer") %> 
