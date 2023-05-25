@@ -49,71 +49,62 @@
         </button>
     </div>
     <script>
-        $('body').on('click', '.likeButton', async function () {
-            await like(this.id);
-            var color = $(this).children("span").css("color");
-            if (color == "rgb(0, 0, 0)") {
-                $(this).children("span").css("color", "blue");
-            } else if (color == "rgb(0, 0, 255)") {
-                $(this).children("span").css("color", "black");
-            }
-            var dislikeId = "#" + this.id[0] + "_dislike";
-            color = $(dislikeId).children("span").css("color");
-            if (color == "rgb(0, 0, 255)") {
-                $(dislikeId).children("span").css("color", "black");
-            }
-        });
-
-        function like(id) {
-            axios.get(`/like/${id}`).then(function (response) {
-                console.log(response);
-            }).catch(function (error) {
-                console.error(error);
-            });
-        };
-
-        $('body').on('click', '.dislikeButton', async function () {
-            await dislike(this.id);
-            var color = $(this).children("span").css("color");
-            if (color == "rgb(0, 0, 0)") {
-                $(this).children("span").css("color", "blue");
-            } else if (color == "rgb(0, 0, 255)") {
-                $(this).children("span").css("color", "black");
-            }
-            var likeId = "#" + this.id[0] + "_like";
-            color = $(likeId).children("span").css("color");
-            if (color == "rgb(0, 0, 255)") {
-                $(likeId).children("span").css("color", "black");
-            }
-        });
-
-    function dislike(id) {
-        axios.get(`/dislike/${id}`).then(function(response) {
-            console.log(response);
-        }).catch(function(error) {
-            console.error(error);
-        });
-    };
-    
-    $('body').on('click', '.favouriteButton', async function() {
-        await favourite(this.id);
+$('body').on('click', '.likeButton', async function () {
+        await like(this.id);
         var color = $(this).children("span").css("color");
         if (color == "rgb(0, 0, 0)") {
             $(this).children("span").css("color", "blue");
         } else if (color == "rgb(0, 0, 255)") {
             $(this).children("span").css("color", "black");
         }
-        var dislikeId = "#" + this.id[0] + "_dislike";
-        color = $(dislikeId).children("span").css("color");
-        if (color == "rgb(0, 0, 255)") {
-            $(dislikeId).children("span").css("color", "black");
+        var dislikeId = "#" + this.id.replace("_like", "_dislike");
+        $(dislikeId).children("span").css("color", "black");
+    });
+
+    function like(id) {
+        axios.get(`/like/${id}`).then(function (response) {
+            console.log(response);
+        }).catch(function (error) {
+            console.error(error);
+        });
+    };
+
+    $('body').on('click', '.dislikeButton', async function () {
+        await dislike(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "blue");
+        } else if (color == "rgb(0, 0, 255)") {
+            $(this).children("span").css("color", "black");
         }
+        var likeId = "#" + this.id.replace("_dislike", "_like");
+        $(likeId).children("span").css("color", "black");
+    });
+
+    function dislike(id) {
+        axios.get(`/dislike/${id}`).then(function (response) {
+            console.log(response);
+        }).catch(function (error) {
+            console.error(error);
+        });
+    };
+
+    $('body').on('click', '.favouriteButton', async function () {
+        await favourite(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "#FFD700");
+        } else if (color == "rgb(255, 215, 0)") {
+            $(this).children("span").css("color", "black");
+        }
+        var dislikeId = "#" + this.id.replace("_favourite", "_dislike");
+        $(dislikeId).children("span").css("color", "black");
     });
 
     function favourite(id) {
-        axios.get(`/favourite/${id}`).then(function(response) {
+        axios.get(`/favourite/${id}`).then(function (response) {
             console.log(response);
-        }).catch(function(error) {
+        }).catch(function (error) {
             console.error(error);
         });
     };

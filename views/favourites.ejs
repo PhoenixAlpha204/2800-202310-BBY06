@@ -88,19 +88,14 @@
         };
 
         $('body').on('click', '.favouriteButton', async function () {
-            await favourite(this.id);
-            var color = $(this).children("span").css("color");
-            if (color == "rgb(0, 0, 0)") {
-                $(this).children("span").css("color", "blue");
-            } else if (color == "rgb(0, 0, 255)") {
-                $(this).children("span").css("color", "black");
-            }
-            var dislikeId = "#" + this.id[0] + "_dislike";
-            color = $(dislikeId).children("span").css("color");
-            if (color == "rgb(0, 0, 255)") {
-                $(dislikeId).children("span").css("color", "black");
-            }
-        });
+        await favourite(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "#FFD700");
+        } else if (color == "rgb(255, 215, 0)") {
+            $(this).children("span").css("color", "black");
+        }
+    });
 
         function favourite(id) {
             axios.get(`/favourite/${id}`).then(function (response) {
