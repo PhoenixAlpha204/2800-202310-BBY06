@@ -14,7 +14,16 @@ function disliked(array, id) {
     }
 };
 
+function favourited(array, id) {
+    if (array.favourites.includes(id)) {
+        return "blue";
+    } else {
+        return "black";
+    }
+};
+
 module.exports = {
     liked: liked,
     disliked: disliked,
+    favourited: favourited,
 }

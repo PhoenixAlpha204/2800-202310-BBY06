@@ -25,6 +25,10 @@
       background-color: #171D1C;
     } 
 
+    .hide {
+      display: none;
+    }
+
     footer {
     bottom: 0;
     left: 0;
@@ -107,7 +111,7 @@
         background-color: #171D1C;
       }
 
-      .hide{
+      .mobileHide{
         display: none;
       }
 
@@ -213,6 +217,30 @@
 .shake {
   animation: shake 0.5s;
 }
+
+.track-container {
+  overflow: hidden;
+  max-width: 400px;
+}
+
+.track-name {
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.track-name:hover {
+  animation: marquee 5s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
   </style>
   
   <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
