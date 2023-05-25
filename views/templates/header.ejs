@@ -210,6 +210,30 @@
 .shake {
   animation: shake 0.5s;
 }
+
+.track-container {
+  overflow: hidden;
+  max-width: 400px;
+}
+
+.track-name {
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.track-name:hover {
+  animation: marquee 5s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
   </style>
   
   <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
