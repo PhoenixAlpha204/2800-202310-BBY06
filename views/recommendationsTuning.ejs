@@ -26,6 +26,9 @@
                             <span class="material-icons"
                                 style="color: <%- script.favourited(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">star</span>
                         </button>
+                        <form action="/recommendations?id=<%= songs[i]._id %>" method="post">
+                            <button type="submit" class="btn btn-dark recommendButton" id=<%=songs[i]._id + "_recommend" %> style="margin-right: 40px;">Songgest Me</button>
+                        </form>
                         <button type="button" class="likeButton" id=<%=songs[i]._id + "_like" %> style="background:
                             transparent; border: none;">
                             <span class="material-icons"
@@ -55,7 +58,7 @@
             } else if (color == "rgb(0, 0, 255)") {
                 $(this).children("span").css("color", "black");
             }
-            var dislikeId = "#" + this.id[0] + "_dislike";
+            var dislikeId = "#" + parseInt(this.id) + "_dislike";
             color = $(dislikeId).children("span").css("color");
             if (color == "rgb(0, 0, 255)") {
                 $(dislikeId).children("span").css("color", "black");
@@ -78,7 +81,7 @@
             } else if (color == "rgb(0, 0, 255)") {
                 $(this).children("span").css("color", "black");
             }
-            var likeId = "#" + this.id[0] + "_like";
+            var likeId = "#" + parseInt(this.id) + "_like";
             color = $(likeId).children("span").css("color");
             if (color == "rgb(0, 0, 255)") {
                 $(likeId).children("span").css("color", "black");
@@ -100,11 +103,6 @@
                 $(this).children("span").css("color", "blue");
             } else if (color == "rgb(0, 0, 255)") {
                 $(this).children("span").css("color", "black");
-            }
-            var dislikeId = "#" + this.id[0] + "_dislike";
-            color = $(dislikeId).children("span").css("color");
-            if (color == "rgb(0, 0, 255)") {
-                $(dislikeId).children("span").css("color", "black");
             }
         });
 

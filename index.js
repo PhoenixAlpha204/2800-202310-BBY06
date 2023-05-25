@@ -824,6 +824,27 @@ app.get('/favourite/:id', async (req, res) => {
   res.send("" + id);
 });
 
+app.post('/recommendations', async (req, res) => {
+  var script = require('./scripts/likesDislikes.js');
+  var id = parseInt(req.query.id);
+  axios.get(`http://127.0.0.1:5000/recommend/${id}`).then(async (response) => {
+    // Handle the API response
+    console.log(response.data); // Log the response data
+    var id = response.data.ID[0];
+    const songCollection = database.db(mongodb_database).collection("kaggle");
+    let song = await songCollection.findOne({ _id: id });
+    console.log(song);
+    const uriParts = song.Uri.split(":");
+    song.Uri = uriParts[2];
+    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+    res.render("recommendations", {song: song, script: script, userLikesDislikes: userLikesDislikes[0]});
+  }).catch((error) => {
+    // Handle errors
+    console.error(error);
+    res.status(500).send("Error calling the API");
+  });
+});
+
 app.use(express.static(__dirname + "/public"));
 
 app.get("/recommend/:songId", (req, res) => {
