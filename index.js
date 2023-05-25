@@ -39,6 +39,7 @@ const navLinks = [
     {name: "Favourites", link: "/favourites"},
     {name: "Playlists", link: "/playlists"},
 ];
+
 app.use("/", (req, res, next) => {
     app.locals.navLinks = navLinks;
     app.locals.currentUrl = url.parse(req.url).pathname;
