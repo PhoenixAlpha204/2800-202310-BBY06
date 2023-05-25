@@ -1,30 +1,17 @@
 <%- include("templates/header") %> 
 <h2 class="pb-2 border-bottom border-info" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Profile</h2>
 
-<div class="container px-4 py-5 " id="icon-grid">
-  <img src="404image" class="rounded-circle" onerror="this.src='./img/placeholder-pfp.jpg';" width="200" height="200">
-  
-<div class="container text-center">
-<br/>
-  <h2>
-    <a href="/profile"
-      ><button type="button" class="btn btn-lg btn-block btn-outline-primary">Basic info</button></a>
-  </h2>
-<br/>
-  <h2>
-    <a href="/dataHistory"
-      ><button type="button" class="btn btn-lg btn-block btn-outline-primary">Data History</button></a>
-  </h2>
-<br/>
-  <h2>
-    <a href="/userSettings"
-      ><button type="button" class="btn btn-lg btn-block btn-outline-primary">Settings</button></a>
-  </h2>
-<br/>
-  <h2>
-    <a href="/logout"
-      ><button type="button" class="btn btn-lg btn-block btn-outline-danger">Log Out</button></a>
-  </h2>
+<div class="container px-4 py-5" id="icon-grid">
+  <img src="404image" class="rounded-circle" onerror="this.src='./img/placeholder-pfp.jpg';" width="200" height="200" style="margin-bottom: 20px;">
+
+  <div class="container text-center">
+    <div class="d-grid gap-2 col-3 mx-auto">
+      <a href="/profile" class="btn btn-outline-primary btn-lg custom-btn">Basic info</a>
+      <a href="/dataHistory" class="btn btn-outline-primary btn-lg custom-btn">Data History</a>
+      <a href="/userSettings" class="btn btn-outline-primary btn-lg custom-btn">Settings</a>
+      <a href="/logout" class="btn btn-outline-danger btn-lg custom-btn">Log Out</a>
+    </div>
   </div>
-  </div>
+</div>
+
 <%- include("templates/footer") %>
