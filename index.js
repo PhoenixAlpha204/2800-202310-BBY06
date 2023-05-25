@@ -614,11 +614,13 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
     await userCollection.updateOne({ _id: result[0]._id }, { $set: { searchHistory: result[0].searchHistory } });
     searchTerm = formatSearch(searchTerm);
     const songCollection = database.db(mongodb_database).collection("kaggle");
-    var list = await songCollection.find().project({ Track: 1, Artist: 1, Album: 1 }).toArray();
+    var list = await songCollection.find().project({ Track: 1, Artist: 1, Album: 1, Uri: 1}).toArray();
     //filter songs in the database based on the given name
     list.forEach((song) => {
       song.formattedName = formatSearch(song.Track);
       song.count = 0;
+      const uriParts = song.Uri.split(":");
+      song.Uri = uriParts[2];
     });
     var count = 0;
     list.forEach((song) => {
@@ -743,7 +745,10 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
         }
         songIds.push(temp);
         let res = await songCollection.findOne({ _id: temp });
+        const uriParts = res.Uri.split(":");
+        res.Uri = uriParts[2];
         songs.push(res);
+        
     }
     res.render("recommendationsTuning", { script: script, songs: songs, userLikesDislikes: userLikesDislikes[0]});
 });
