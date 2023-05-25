@@ -236,13 +236,21 @@ app.get("/loggedin", sessionValidation, (req, res) => {
   res.render(template, data);
 });
 
-app.get("/dataHistory", sessionValidation, (req, res) => {
-  var username = req.session.username;
-  var template = "dataHistory.ejs";
-  var data = {
-    username: username,
-  };
-  res.render(template, data);
+app.get("/dataHistory", sessionValidation, async (req, res) => {
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+  var likes = [];
+  var dislikes = [];
+  const songCollection = database.db(mongodb_database).collection("songs_dummy");
+  for (var i = 0; i < userLikesDislikes[0].likes.length; i++) {
+    let res = await songCollection.findOne({ _id: userLikesDislikes[0].likes[i] });
+    likes.push(res);
+  }
+  for (var i = 0; i < userLikesDislikes[0].dislikes.length; i++) {
+    let res = await songCollection.findOne({ _id: userLikesDislikes[0].dislikes[i] });
+    dislikes.push(res);
+  }
+  var script = require('./scripts/likesDislikes.js');
+  res.render("dataHistory", { likes: likes, dislikes: dislikes, script: script });
 });
 
 app.get("/userSettings", sessionValidation, (req, res) => {
