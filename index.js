@@ -831,8 +831,12 @@ app.post('/recommendations', async (req, res) => {
     console.log(response.data); // Log the response data
     var id = response.data.ID[0];
     const songCollection = database.db(mongodb_database).collection("kaggle");
-    let res = await songCollection.findOne({ _id: id });
-    res.render("recommendations", {song: song, script: script});
+    let song = await songCollection.findOne({ _id: id });
+    console.log(song);
+    const uriParts = song.Uri.split(":");
+    song.Uri = uriParts[2];
+    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+    res.render("recommendations", {song: song, script: script, userLikesDislikes: userLikesDislikes[0]});
   }).catch((error) => {
     // Handle errors
     console.error(error);
