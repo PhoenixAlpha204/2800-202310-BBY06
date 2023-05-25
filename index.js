@@ -246,10 +246,14 @@ app.get("/dataHistory", sessionValidation, async (req, res) => {
   const songCollection = database.db(mongodb_database).collection("kaggle");
   for (var i = 0; i < userLikesDislikes[0].likes.length; i++) {
     let res = await songCollection.findOne({ _id: userLikesDislikes[0].likes[i] });
+    const uriParts = res.Uri.split(":");
+    res.Uri = uriParts[2];
     likes.push(res);
   }
   for (var i = 0; i < userLikesDislikes[0].dislikes.length; i++) {
     let res = await songCollection.findOne({ _id: userLikesDislikes[0].dislikes[i] });
+    const uriParts = res.Uri.split(":");
+    res.Uri = uriParts[2];
     dislikes.push(res);
   }
   var script = require('./scripts/likesDislikes.js');
@@ -453,9 +457,6 @@ app.post('/resetPassword', async (req, res) => {
     }
   }
 });
-
-// Define incorrectCount outside the route handler function
-var incorrectCount = 0;
 
 app.post('/checkSecurityQuestion', async (req, res) => {
   var email = req.body.email;
