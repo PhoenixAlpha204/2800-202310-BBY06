@@ -237,7 +237,10 @@ app.get("/loggedin", sessionValidation, (req, res) => {
 });
 
 app.get("/dataHistory", sessionValidation, async (req, res) => {
-  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+  if (userLikesDislikes[0].likes == null || userLikesDislikes[0].dislikes == null || userLikesDislikes[0].favourites == null) {
+    initLikesDislikes(userLikesDislikes[0]);
+  }
   var likes = [];
   var dislikes = [];
   const songCollection = database.db(mongodb_database).collection("kaggle");
@@ -250,7 +253,7 @@ app.get("/dataHistory", sessionValidation, async (req, res) => {
     dislikes.push(res);
   }
   var script = require('./scripts/likesDislikes.js');
-  res.render("dataHistory", { likes: likes, dislikes: dislikes, script: script });
+  res.render("dataHistory", { likes: likes, dislikes: dislikes, script: script, userLikesDislikes: userLikesDislikes[0] });
 });
 
 app.get("/userSettings", sessionValidation, (req, res) => {
@@ -262,13 +265,20 @@ app.get("/userSettings", sessionValidation, (req, res) => {
   res.render(template, data);
 });
 
-app.get("/favourites", sessionValidation, (req, res) => {
-  var username = req.session.username;
-  var template = "favourites.ejs";
-  var data = {
-    username: username,
-  };
-  res.render(template, data);
+app.get("/favourites", sessionValidation, async (req, res) => {
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+  if (userLikesDislikes[0].likes == null || userLikesDislikes[0].dislikes == null || userLikesDislikes[0].favourites == null) {
+    initLikesDislikes(userLikesDislikes[0]);
+  }
+  var favourites = [];
+  const songCollection = database.db(mongodb_database).collection("kaggle");
+  for (var i = 0; i < userLikesDislikes[0].favourites.length; i++) {
+    let res = await songCollection.findOne({ _id: userLikesDislikes[0].favourites[i] });
+    favourites.push(res);
+  }
+  console.log(favourites);
+  var script = require('./scripts/likesDislikes.js');
+  res.render("favourites", { userLikesDislikes: userLikesDislikes[0], favourites: favourites, script: script });
 });
 
 app.get("/playlists", sessionValidation, (req, res) => {
@@ -593,6 +603,10 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
     res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0]});
   //if no filters passed, get new results
   } else {
+    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+    if (userLikesDislikes[0].likes == null || userLikesDislikes[0].dislikes == null || userLikesDislikes[0].favourites == null) {
+      initLikesDislikes(userLikesDislikes[0]);
+    }
     var searchTerm;
     if (req.body.song != null) {
       searchTerm = req.body.song;
@@ -719,15 +733,9 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
     var collectionSize = await songCollection.count();
     var songIds = [undefined];
     var temp;
-    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
-    if (userLikesDislikes[0].likes == null || userLikesDislikes[0].dislikes == null) {
-        if (userLikesDislikes[0].likes == null) {
-            userLikesDislikes[0].likes = [];
-        }
-        if (userLikesDislikes[0].dislikes == null) {
-            userLikesDislikes[0].dislikes = [];
-        }
-        await userCollection.updateOne({ _id: userLikesDislikes[0]._id }, { $set: { likes: userLikesDislikes[0].likes, dislikes: userLikesDislikes[0].dislikes } });
+    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+    if (userLikesDislikes[0].likes == null || userLikesDislikes[0].dislikes == null || userLikesDislikes[0].favourites == null) {
+      initLikesDislikes(userLikesDislikes[0]);
     }
     for (let i = 0; i < 5; i++) {
         var counter = 0;
@@ -747,6 +755,19 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
     }
     res.render("recommendationsTuning", { script: script, songs: songs, userLikesDislikes: userLikesDislikes[0]});
 });
+
+async function initLikesDislikes(array) {
+  if (array.likes == null) {
+    array.likes = [];
+  }
+  if (array.dislikes == null) {
+      array.dislikes = [];
+  }
+  if (array.favourites == null) {
+    array.favourites = [];
+  }
+  await userCollection.updateOne({ _id: array._id }, { $set: { likes: array.likes, dislikes: array.dislikes, favourites: array.favourites } });
+};
 
 app.get('/like/:id', async (req, res) => {
     var userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
@@ -778,6 +799,19 @@ app.get('/dislike/:id', async (req, res) => {
     }
     await userCollection.updateOne({ _id: userLikesDislikes._id }, { $set: { likes: userLikesDislikes.likes, dislikes: userLikesDislikes.dislikes } });
     res.send("" + id);
+});
+
+app.get('/favourite/:id', async (req, res) => {
+  var userFavourites = await userCollection.find({ username: req.session.username }).project({ favourites: 1, _id: 1 }).toArray();
+  userFavourites = userFavourites[0];
+  var id = parseInt(req.params.id);
+  if (userFavourites.favourites.includes(id)) {
+      userFavourites.favourites.splice(userFavourites.favourites.indexOf(id), 1);
+  } else {
+      userFavourites.favourites.push(id);
+  }
+  await userCollection.updateOne({ _id: userFavourites._id }, { $set: { favourites: userFavourites.favourites } });
+  res.send("" + id);
 });
 
 app.use(express.static(__dirname + "/public"));

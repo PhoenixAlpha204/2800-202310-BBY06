@@ -10,7 +10,9 @@
                 </div>
                 <br/>
                 <div class="d-flex">
-                    <span class="material-icons me-auto" style="font-size: 30pt;">star</span>
+                    <button type="button" class="favouriteButton me-auto" id=<%= likes[i]._id + "_favourite"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: <%- script.favourited(userLikesDislikes, likes[i]._id) %>; font-size: 30pt;">star</span>
+                    </button>
                     <button type="button" class="likeButton" id=<%= likes[i]._id + "_like"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: blue; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                     </button>
@@ -32,7 +34,9 @@
                 </div>
                 <br/>
                 <div class="d-flex">
-                    <span class="material-icons me-auto" style="font-size: 30pt;">star</span>
+                    <button type="button" class="favouriteButton me-auto" id=<%= dislikes[i]._id + "_favourite"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: <%- script.favourited(userLikesDislikes, dislikes[i]._id) %>; font-size: 30pt;">star</span>
+                    </button>
                     <button type="button" class="likeButton" id=<%= dislikes[i]._id + "_like"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: black; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                     </button>
@@ -112,5 +116,28 @@
         $('#dislike').addClass('active');
         $('#like').removeClass('active');
     });
+    
+    $('body').on('click', '.favouriteButton', async function() {
+        await favourite(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "blue");
+        } else if (color == "rgb(0, 0, 255)") {
+            $(this).children("span").css("color", "black");
+        }
+        var dislikeId = "#" + this.id[0] + "_dislike";
+        color = $(dislikeId).children("span").css("color");
+        if (color == "rgb(0, 0, 255)") {
+            $(dislikeId).children("span").css("color", "black");
+        }
+    });
+
+    function favourite(id) {
+        axios.get(`/favourite/${id}`).then(function(response) {
+            console.log(response);
+        }).catch(function(error) {
+            console.error(error);
+        });
+    };
 </script>
 <%- include("templates/footer") %>
