@@ -829,15 +829,19 @@ app.post('/recommendations', async (req, res) => {
   var id = parseInt(req.query.id);
   axios.get(`http://127.0.0.1:5000/recommend/${id}`).then(async (response) => {
     // Handle the API response
-    console.log(response.data); // Log the response data
-    var id = response.data.ID[0];
+    console.log(response.data);
+    var recommended_song_id = parseInt(response.data.ID);
     const songCollection = database.db(mongodb_database).collection("kaggle");
-    let song = await songCollection.findOne({ _id: id });
-    console.log(song);
-    const uriParts = song.Uri.split(":");
-    song.Uri = uriParts[2];
-    const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
-    res.render("recommendations", {song: song, script: script, userLikesDislikes: userLikesDislikes[0]});
+    let song = await songCollection.findOne({ _id: recommended_song_id });
+    if (song) {
+      const uriParts = song.Uri.split(":");
+      song.Uri = uriParts[2];
+      const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+      res.render("recommendations", { song: song, script: script, userLikesDislikes: userLikesDislikes[0] });
+    } else {
+      console.error("Song not found");
+      res.status(404).send("Song not found");
+    }
   }).catch((error) => {
     // Handle errors
     console.error(error);
@@ -846,24 +850,6 @@ app.post('/recommendations', async (req, res) => {
 });
 
 app.use(express.static(__dirname + "/public"));
-
-app.get("/recommend/:songId", (req, res) => {
-  const songId = req.params.songId;  // Retrieve the song ID from the URL parameter
-
-  // Make a GET request to the Flask API with the dynamic song ID
-  axios
-    .get(`http://127.0.0.1:5000/recommend/${songId}`)
-    .then((response) => {
-      // Handle the API response
-      console.log(response.data); // Log the response data
-      res.send("API response: " + JSON.stringify(response.data));
-    })
-    .catch((error) => {
-      // Handle errors
-      console.error(error);
-      res.status(500).send("Error calling the API");
-    });
-});
 
 app.get("*", (req, res) => {
   res.status(404);
