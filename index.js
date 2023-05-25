@@ -2,10 +2,12 @@ require("./utils.js");
   
 require("dotenv").config();
 const express = require("express");
+const axios = require("axios");
 const MongoStore = require("connect-mongo");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const saltRounds = 12;
+const url = require("url");
 
 const session = require("express-session");
 
@@ -823,6 +825,24 @@ app.get('/favourite/:id', async (req, res) => {
 });
 
 app.use(express.static(__dirname + "/public"));
+
+app.get("/recommend/:songId", (req, res) => {
+  const songId = req.params.songId;  // Retrieve the song ID from the URL parameter
+
+  // Make a GET request to the Flask API with the dynamic song ID
+  axios
+    .get(`http://127.0.0.1:5000/recommend/${songId}`)
+    .then((response) => {
+      // Handle the API response
+      console.log(response.data); // Log the response data
+      res.send("API response: " + JSON.stringify(response.data));
+    })
+    .catch((error) => {
+      // Handle errors
+      console.error(error);
+      res.status(500).send("Error calling the API");
+    });
+});
 
 app.get("*", (req, res) => {
   res.status(404);
