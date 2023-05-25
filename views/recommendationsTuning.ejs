@@ -1,18 +1,19 @@
 <%- include("templates/header") %>
-    <h2 class="pb-2 border-bottom border-info" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Favourites</h2>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center" id="favourites">
+    <h2 class="border-bottom border-info pb-2" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Let's Tune Your
+        Recommendations!</h2>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
         <div class="list-group">
-            <% for(i=0; i < favourites.length; i++) { %>
+            <% for(i=0; i < songs.length; i++) { %>
                 <div class="list-group-item">
                     <div class="track-container">
                         <h4 class="d-flex justify-content-start track-name">
-                            <%= favourites[i].Track %>
+                            <%= songs[i].Track %>
                         </h4>
                     </div>
                     <div class="rectangle"
                         style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
                         <iframe style="border-radius:12px"
-                            src="https://open.spotify.com/embed/track/<%= favourites[i].Uri %>?utm_source=generator&theme=0"
+                            src="https://open.spotify.com/embed/track/<%= songs[i].Uri %>?utm_source=generator&theme=0"
                             width="100%" height="152" frameBorder="0" allowfullscreen=""
                             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                             loading="lazy">
@@ -20,26 +21,31 @@
                     </div>
                     <br />
                     <div class="d-flex">
-                        <button type="button" class="favouriteButton me-auto" id=<%=favourites[i]._id + "_favourite" %>
+                        <button type="button" class="favouriteButton me-auto" id=<%=songs[i]._id + "_favourite" %>
                             style="background: transparent; border: none;">
                             <span class="material-icons"
-                                style="color: <%- script.favourited(userLikesDislikes, favourites[i]._id) %>; font-size: 30pt;">star</span>
+                                style="color: <%- script.favourited(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">star</span>
                         </button>
-                        <button type="button" class="likeButton" id=<%=favourites[i]._id + "_like" %> style="background:
+                        <button type="button" class="likeButton" id=<%=songs[i]._id + "_like" %> style="background:
                             transparent; border: none;">
                             <span class="material-icons"
-                                style="color: <%- script.liked(userLikesDislikes, favourites[i]._id) %>; font-size: 30pt; margin-right: 10px;">thumb_up</span>
+                                style="color: <%- script.liked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                         </button>
-                        <button type="button" class="dislikeButton" id=<%=favourites[i]._id + "_dislike" %>
+                        <button type="button" class="dislikeButton" id=<%=songs[i]._id + "_dislike" %>
                             style="background: transparent; border: none;">
                             <span class="material-icons"
-                                style="color: <%- script.disliked(userLikesDislikes, favourites[i]._id) %>; font-size: 30pt;">thumb_down</span>
+                                style="color: <%- script.disliked(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">thumb_down</span>
                         </button>
                     </div>
                 </div>
                 <% } %>
         </div>
+        <% if (songs.length==0) { %>
+            <p>You've rated everything!</p>
+            <% } %>
     </div>
+    <p style="color: darkgray; font-style: italic;">Refresh to tune again with different songs</p>
+    <br />
     <script>
         $('body').on('click', '.likeButton', async function () {
             await like(this.id);

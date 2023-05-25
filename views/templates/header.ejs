@@ -25,7 +25,9 @@
       background-color: #171D1C;
     }
 
-    
+    .hide {
+      display: none;
+    }
 
     body {
       margin: 0;
@@ -103,7 +105,7 @@
         background-color: #171D1C;
       }
 
-      .hide{
+      .mobileHide{
         display: none;
       }
 
@@ -208,9 +210,35 @@
 .shake {
   animation: shake 0.5s;
 }
+
+.track-container {
+  overflow: hidden;
+  max-width: 400px;
+}
+
+.track-name {
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.track-name:hover {
+  animation: marquee 5s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
   </style>
   
   <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -222,9 +250,10 @@
         <a class="navbar-brand" href="/" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Songgestions</a>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav">
-            <a class="nav-link active" href="/search" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Browse</a>
-            <a class="nav-link active" href="/favourites" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Favourites</a>
-            <a class="nav-link active" href="/playlists" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Playlists</a>
+            <% for(var i = 0; i < locals.navLinks.length; i++) { %>
+              <a class="nav-link <% if (locals.currentUrl == navLinks[i].link) { %>active<% } %>" aria-current="page"
+                href="<%= locals.navLinks[i].link %>" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;"><%= locals.navLinks[i].name %></a>
+            <% } %>
           </div>
         </div>
         <a href="/profileUser">
