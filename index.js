@@ -2,6 +2,7 @@ require("./utils.js");
 
 require("dotenv").config();
 const express = require("express");
+const axios = require("axios");
 const MongoStore = require("connect-mongo");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
@@ -820,6 +821,23 @@ app.get('/favourite/:id', async (req, res) => {
   }
   await userCollection.updateOne({ _id: userFavourites._id }, { $set: { favourites: userFavourites.favourites } });
   res.send("" + id);
+});
+
+app.post('/recommendations', async (req, res) => {
+  var script = require('./scripts/likesDislikes.js');
+  var id = parseInt(req.query.id);
+  axios.get(`http://127.0.0.1:5000/recommend/${id}`).then(async (response) => {
+    // Handle the API response
+    console.log(response.data); // Log the response data
+    var id = response.data.ID[0];
+    const songCollection = database.db(mongodb_database).collection("kaggle");
+    let res = await songCollection.findOne({ _id: id });
+    res.render("recommendations", {song: song, script: script});
+  }).catch((error) => {
+    // Handle errors
+    console.error(error);
+    res.status(500).send("Error calling the API");
+  });
 });
 
 app.use(express.static(__dirname + "/public"));

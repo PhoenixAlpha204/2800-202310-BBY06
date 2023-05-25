@@ -26,6 +26,9 @@
                             <span class="material-icons"
                                 style="color: <%- script.favourited(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">star</span>
                         </button>
+                        <form action="/recommendations?id=<%= songs[i]._id %>" method="post">
+                            <button type="submit" class="btn btn-dark recommendButton" id=<%=songs[i]._id + "_recommend" %> style="margin-right: 40px;">Songgest Me</button>
+                        </form>
                         <button type="button" class="likeButton" id=<%=songs[i]._id + "_like" %> style="background:
                             transparent; border: none;">
                             <span class="material-icons"
@@ -117,3 +120,4 @@
         };
     </script>
     <%- include("templates/footer") %>
+    
