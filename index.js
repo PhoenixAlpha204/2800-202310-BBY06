@@ -558,7 +558,7 @@ app.get("/search", sessionValidation, (req, res) => {
 });
 
 app.post("/searchSong", sessionValidation, async (req, res) => {
-  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
   //if passed filters, filter previous results
   if (req.query.artist != undefined || req.query.album != undefined) {
     var list = [...req.session.searchResults];
