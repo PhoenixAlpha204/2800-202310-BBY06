@@ -29,12 +29,6 @@
       display: none;
     }
 
-    footer {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    }
-
     body {
       margin: 0;
       padding: 0;
@@ -54,7 +48,9 @@
 
     footer {
       height: 50px;
-      
+      bottom: 0;
+      left: 0;
+      width: 100%;
     }
 
     .navbar2 {
@@ -91,18 +87,18 @@
       height: 100%;
     }
 
-    @media only screen and (min-width: 768px) {
+    @media only screen and (min-width: 990px) {
       .footer {
         height: 50px;
         bottom: 0;
       }
     }
 
-    @media only screen and (max-width: 768px) {
+    @media only screen and (max-width: 989px) {
       #spacer {
         height: 100px;
       }
-
+      
       ul {
         list-style: none;
       }
@@ -118,7 +114,7 @@
       body {
         margin: 0;
         padding: 0;
-        height: 110vh;
+        height: 100vh;
         overflow-y: scroll;
         color: #efe9f4;
         background-color: #171D1C;
@@ -144,6 +140,7 @@
         width: 100%;
         height: 80px;
         position: sticky;
+        position: fixed;
         bottom: 0;
         left: 0;
       }
@@ -269,4 +266,4 @@
       </div>
     </nav>
   </div><br/><br/>
-  <div class="container content flex-grow-1" style="text-align: center;">
+  <div class="container content flex-grow-1 container-fluid" style="text-align: center;">
