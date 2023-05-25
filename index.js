@@ -236,13 +236,21 @@ app.get("/loggedin", sessionValidation, (req, res) => {
   res.render(template, data);
 });
 
-app.get("/dataHistory", sessionValidation, (req, res) => {
-  var username = req.session.username;
-  var template = "dataHistory.ejs";
-  var data = {
-    username: username,
-  };
-  res.render(template, data);
+app.get("/dataHistory", sessionValidation, async (req, res) => {
+  const userLikesDislikes = await userCollection.find({ username: req.session.username }).project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+  var likes = [];
+  var dislikes = [];
+  const songCollection = database.db(mongodb_database).collection("songs_dummy");
+  for (var i = 0; i < userLikesDislikes[0].likes.length; i++) {
+    let res = await songCollection.findOne({ _id: userLikesDislikes[0].likes[i] });
+    likes.push(res);
+  }
+  for (var i = 0; i < userLikesDislikes[0].dislikes.length; i++) {
+    let res = await songCollection.findOne({ _id: userLikesDislikes[0].dislikes[i] });
+    dislikes.push(res);
+  }
+  var script = require('./scripts/likesDislikes.js');
+  res.render("dataHistory", { likes: likes, dislikes: dislikes, script: script });
 });
 
 app.get("/userSettings", sessionValidation, (req, res) => {
@@ -547,15 +555,12 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
       artist = formatSearch(artist);
       for (var i = 0; i < list.length; i++) {
         var contains = false;
-        var artists = list[i].artist;
+        var artists = formatSearch(list[i].artist);
         artists.forEach((name) => {
-          var formattedName = formatSearch(name);
-          formattedName.forEach((part) => {
-            artist.forEach((term) => {
-              if (part.match(new RegExp(term, 'g'))) {
-                contains = true;
-              }
-            });
+          artist.forEach((term) => {
+            if (name.match(new RegExp(term, 'g'))) {
+              contains = true;
+            }
           });
         });
         if (!contains) {
@@ -584,7 +589,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
         }
       }
     }
-    var script = require('./scripts/recommendationsTuning.js');
+    var script = require('./scripts/likesDislikes.js');
     res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0]});
   //if no filters passed, get new results
   } else {
@@ -640,7 +645,7 @@ app.post("/searchSong", sessionValidation, async (req, res) => {
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
     console.log(req.session.searchResults);
-    var script = require('./scripts/recommendationsTuning.js');
+    var script = require('./scripts/likesDislikes.js');
     res.render("results", { results: list, script: script, userLikesDislikes: userLikesDislikes[0] });
   }
 });
@@ -708,7 +713,7 @@ app.post("/submitFilters", function (req, res) {
 });
 
 app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
-    var script = require('./scripts/recommendationsTuning.js');
+    var script = require('./scripts/likesDislikes.js');
     var songs = [];
     const songCollection = database.db(mongodb_database).collection("songs_dummy");
     var collectionSize = await songCollection.count();

@@ -1,3 +1,116 @@
-<%- include("templates/header") %> 
+<%- include("templates/header") %>
 <h2 class="pb-2 border-bottom border-info" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Data History</h2>
-<%- include("templates/footer") %> 
+<div class="d-grid gap-2 d-sm-flex justify-content-sm-center" id="likes">
+    <div class="list-group">
+        <% for(i = 0; i < likes.length; i++) { %>
+            <div class="list-group-item">
+                <h4 class="d-flex justify-content-start"> <%= likes[i].name %> </h4>
+                <div class="rectangle" style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
+                    <h4>[Spotify Embed Placeholder]</h4>
+                </div>
+                <br/>
+                <div class="d-flex">
+                    <span class="material-icons me-auto" style="font-size: 30pt;">star</span>
+                    <button type="button" class="likeButton" id=<%= likes[i]._id + "_like"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: blue; font-size: 30pt; margin-right: 10px;">thumb_up</span>
+                    </button>
+                    <button type="button" class="dislikeButton" id=<%= likes[i]._id + "_dislike"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: black; font-size: 30pt;">thumb_down</span>
+                    </button>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+<div class="gap-2 justify-content-sm-center hide" id="dislikes">
+    <div class="list-group">
+        <% for(i = 0; i < dislikes.length; i++) { %>
+            <div class="list-group-item">
+                <h4 class="d-flex justify-content-start"> <%= dislikes[i].name %> </h4>
+                <div class="rectangle" style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
+                    <h4>[Spotify Embed Placeholder]</h4>
+                </div>
+                <br/>
+                <div class="d-flex">
+                    <span class="material-icons me-auto" style="font-size: 30pt;">star</span>
+                    <button type="button" class="likeButton" id=<%= dislikes[i]._id + "_like"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: black; font-size: 30pt; margin-right: 10px;">thumb_up</span>
+                    </button>
+                    <button type="button" class="dislikeButton" id=<%= dislikes[i]._id + "_dislike"%> style="background: transparent; border: none;">
+                        <span class="material-icons" style="color: blue; font-size: 30pt;">thumb_down</span>
+                    </button>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+<div class="btn-group" role="group">
+    <button type="button" class="theme btn btn-outline-primary active" id="like">Likes</button>
+    <button type="button" class="theme btn btn-outline-primary" id="dislike">Dislikes</button>
+</div>
+<script>
+    $('body').on('click', '.likeButton', async function() {
+        await like(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "blue");
+        } else if (color == "rgb(0, 0, 255)") {
+            $(this).children("span").css("color", "black");
+        }
+        var dislikeId = "#" + this.id[0] + "_dislike";
+        color = $(dislikeId).children("span").css("color");
+        if (color == "rgb(0, 0, 255)") {
+            $(dislikeId).children("span").css("color", "black");
+        }
+    });
+
+    function like(id) {
+        axios.get(`/like/${id}`).then(function(response) {
+            console.log(response);
+        }).catch(function(error) {
+            console.error(error);
+        });
+    };
+
+    $('body').on('click', '.dislikeButton', async function() {
+        await dislike(this.id);
+        var color = $(this).children("span").css("color");
+        if (color == "rgb(0, 0, 0)") {
+            $(this).children("span").css("color", "blue");
+        } else if (color == "rgb(0, 0, 255)") {
+            $(this).children("span").css("color", "black");
+        }
+        var likeId = "#" + this.id[0] + "_like";
+        color = $(likeId).children("span").css("color");
+        if (color == "rgb(0, 0, 255)") {
+            $(likeId).children("span").css("color", "black");
+        }
+    });
+
+    function dislike(id) {
+        axios.get(`/dislike/${id}`).then(function(response) {
+            console.log(response);
+        }).catch(function(error) {
+            console.error(error);
+        });
+    };
+
+    $('#like').on('click', function() {
+        $('#likes').removeClass('hide');
+        $('#likes').addClass('d-sm-flex d-grid');
+        $('#dislikes').addClass('hide');
+        $('#dislikes').removeClass('d-sm-flex d-grid');
+        $('#like').addClass('active');
+        $('#dislike').removeClass('active');
+    });
+
+    $('#dislike').on('click', function() {
+        $('#dislikes').removeClass('hide');
+        $('#dislikes').addClass('d-sm-flex d-grid');
+        $('#likes').addClass('hide');
+        $('#likes').removeClass('d-sm-flex d-grid');
+        $('#dislike').addClass('active');
+        $('#like').removeClass('active');
+    });
+</script>
+<%- include("templates/footer") %>
