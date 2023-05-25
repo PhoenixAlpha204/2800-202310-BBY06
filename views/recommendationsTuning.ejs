@@ -13,16 +13,18 @@
                     <div class="rectangle"
                         style="height: 150px; width: 400px; background-color: gray; border-radius: 10px; margin-top: 20px;">
                         <iframe style="border-radius:12px"
-                        src="https://open.spotify.com/embed/track/<%= songs[i].Uri %>?utm_source=generator&theme=0"
-                        width="100%" height="152" frameBorder="0" allowfullscreen=""
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy">
-                    </iframe>
+                            src="https://open.spotify.com/embed/track/<%= songs[i].Uri %>?utm_source=generator&theme=0"
+                            width="100%" height="152" frameBorder="0" allowfullscreen=""
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy">
+                        </iframe>
                     </div>
                     <br />
                     <div class="d-flex">
-                        <button type="button" class="favouriteButton me-auto" id=<%= songs[i]._id + "_favourite"%> style="background: transparent; border: none;">
-                            <span class="material-icons" style="color: <%- script.favourited(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">star</span>
+                        <button type="button" class="favouriteButton me-auto" id=<%=songs[i]._id + "_favourite" %>
+                            style="background: transparent; border: none;">
+                            <span class="material-icons"
+                                style="color: <%- script.favourited(userLikesDislikes, songs[i]._id) %>; font-size: 30pt;">star</span>
                         </button>
                         <button type="button" class="likeButton" id=<%=songs[i]._id + "_like" %> style="background:
                             transparent; border: none;">
@@ -83,35 +85,35 @@
             }
         });
 
-    function dislike(id) {
-        axios.get(`/dislike/${id}`).then(function(response) {
-            console.log(response);
-        }).catch(function(error) {
-            console.error(error);
-        });
-    };
+        function dislike(id) {
+            axios.get(`/dislike/${id}`).then(function (response) {
+                console.log(response);
+            }).catch(function (error) {
+                console.error(error);
+            });
+        };
 
-    $('body').on('click', '.favouriteButton', async function() {
-        await favourite(this.id);
-        var color = $(this).children("span").css("color");
-        if (color == "rgb(0, 0, 0)") {
-            $(this).children("span").css("color", "blue");
-        } else if (color == "rgb(0, 0, 255)") {
-            $(this).children("span").css("color", "black");
-        }
-        var dislikeId = "#" + this.id[0] + "_dislike";
-        color = $(dislikeId).children("span").css("color");
-        if (color == "rgb(0, 0, 255)") {
-            $(dislikeId).children("span").css("color", "black");
-        }
-    });
-
-    function favourite(id) {
-        axios.get(`/favourite/${id}`).then(function(response) {
-            console.log(response);
-        }).catch(function(error) {
-            console.error(error);
+        $('body').on('click', '.favouriteButton', async function () {
+            await favourite(this.id);
+            var color = $(this).children("span").css("color");
+            if (color == "rgb(0, 0, 0)") {
+                $(this).children("span").css("color", "blue");
+            } else if (color == "rgb(0, 0, 255)") {
+                $(this).children("span").css("color", "black");
+            }
+            var dislikeId = "#" + this.id[0] + "_dislike";
+            color = $(dislikeId).children("span").css("color");
+            if (color == "rgb(0, 0, 255)") {
+                $(dislikeId).children("span").css("color", "black");
+            }
         });
-    };
-</script>
-<%- include("templates/footer") %> 
+
+        function favourite(id) {
+            axios.get(`/favourite/${id}`).then(function (response) {
+                console.log(response);
+            }).catch(function (error) {
+                console.error(error);
+            });
+        };
+    </script>
+    <%- include("templates/footer") %>

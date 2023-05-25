@@ -274,6 +274,8 @@ app.get("/favourites", sessionValidation, async (req, res) => {
   const songCollection = database.db(mongodb_database).collection("kaggle");
   for (var i = 0; i < userLikesDislikes[0].favourites.length; i++) {
     let res = await songCollection.findOne({ _id: userLikesDislikes[0].favourites[i] });
+    const uriParts = res.Uri.split(':');
+    res.Uri = uriParts[2];
     favourites.push(res);
   }
   console.log(favourites);
