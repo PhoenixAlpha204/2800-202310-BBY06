@@ -651,18 +651,25 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
       song.count = 0;
       song.Uri = song.Uri.split(":")[2];
     });
+    
+    //assign scores to songs based on how they match the terms
     var count = 0;
     list.forEach((song) => {
       song.formattedName.forEach((name) => {
         searchTerm.forEach((term) => {
           if (name.match(new RegExp(term, "g"))) {
             count += term.length / name.length;
+            if (term.length === name.length) {
+              count++;
+            }
           }
         });
-        song.count += count / song.formattedName.length;
+        song.count += 3 * count / song.formattedName.length;
         count = 0;
       });
     });
+
+    //sort the songs by their scores
     list = list.sort(function (a, b) {
       return b.count - a.count;
     });
@@ -671,6 +678,11 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
         list.splice(i, 1);
         i--;
       }
+    }
+
+    //truncate list for lag friendliness
+    if (list.length > 25) {
+      list.length = 25;
     }
 
     //log everything for future filtering
