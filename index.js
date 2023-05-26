@@ -33,10 +33,10 @@ const userCollection = database.db(mongodb_database).collection("users");
 const songCollection = database.db(mongodb_database).collection("kaggle");
 
 const navLinks = [
-  { link: "/recommendationsTuning", name: "Recommendations" },
-  { link: "/search", name: "Browse" },
-  { link: "/favourites", name: "Favourites" },
-  { link: "/playlists", name: "Playlists" }
+    {link: "/recommendationsTuning", name: "Recommendations"},
+    {link: "/search", name: "Browse"},
+    {link: "/favourites", name: "Favourites"},
+    {link: "/playlists", name: "Playlists"}
 ];
 
 var mongoStore = MongoStore.create({
@@ -46,9 +46,9 @@ var mongoStore = MongoStore.create({
 });
 
 app.use("/", function (req, res, next) {
-  app.locals.navLinks = navLinks;
-  app.locals.currentUrl = url.parse(req.url).pathname;
-  next();
+    app.locals.navLinks = navLinks;
+    app.locals.currentUrl = url.parse(req.url).pathname;
+    next();
 });
 
 app.set("view engine", "ejs");
@@ -65,8 +65,7 @@ app.use(
 );
 
 /**
- * Only allow user to proceed if they are logged in.
- * 
+ * Only allow user to proceed if they are logged in
  * @param {*} req the request
  * @param {*} res the response
  * @param {*} next the page to proceed to
@@ -101,7 +100,7 @@ app.get("/profileUser", function (req, res) {
   if (!req.session.authenticated) {
     res.redirect("/");
   } else {
-    res.render("profileUser");
+  res.render("profileUser");
   }
 });
 
@@ -110,12 +109,7 @@ app.get("/login", function (req, res) {
   res.render("login", { errorMessage: errorMessage });
 });
 
-/**
- * Submits user registration data to the database.
- *
- * @param {*} req The HTTP request object containing the user registration data.
- * @param {*} res The HTTP response object for sending a response.
- */
+// Submitting a new user
 app.post("/submitUser", async function (req, res) {
   var securityQuestion = req.body.securityQuestion;
   var securityAnswer = req.body.securityAnswer;
@@ -136,11 +130,8 @@ app.post("/submitUser", async function (req, res) {
     securityAnswer: Joi.string().max(20).required(),
     username: Joi.string().alphanum().max(20).required()
   });
-
-  //provide error if input is invalid
   const validationResult = schema.validate({
-    email, password, securityAnswer, username
-  });
+    email, password, securityAnswer, username });
   if (validationResult.error != null) {
     console.log(validationResult.error);
     errorMessage = "Invalid input. Please try again.";
@@ -149,17 +140,15 @@ app.post("/submitUser", async function (req, res) {
     return;
   }
 
-  //provide error if username already exist in database
+  //provide error if various fields already exist in database
   const existingUser = await userCollection.findOne({ username: username });
   if (existingUser) {
     errorMessage = "Username already exists";
     console.log("Username already exists");
     res.redirect("/createUser?errorMessage=" +
-      encodeURIComponent(errorMessage));
+    encodeURIComponent(errorMessage));
     return;
   }
-
-  //provide error if email already exist in database
   const existingEmail = await userCollection.findOne({ email: email });
   if (existingEmail) {
     errorMessage = "Email already exists";
@@ -178,7 +167,6 @@ app.post("/submitUser", async function (req, res) {
     user_type: "user",
     username: username
   });
-
   req.session.authenticated = true;
   req.session.username = username;
   req.session.user_type = "user";
@@ -186,12 +174,7 @@ app.post("/submitUser", async function (req, res) {
   res.redirect("/loggedin");
 });
 
-/**
- * Log user in if username and password match database.
- *
- * @param {*} req The HTTP request object containing the login data.
- * @param {*} res The HTTP response object for sending a response.
- */
+// Logging in
 app.post("/loggingin", async function (req, res) {
   var username = req.body.username.toLowerCase();
   var password = req.body.password;
@@ -204,7 +187,7 @@ app.post("/loggingin", async function (req, res) {
     console.log(validationResult.error);
     errorMessage = "Invalid input. Please try again.";
     res.redirect("/login?errorMessage=" +
-      encodeURIComponent(errorMessage));
+    encodeURIComponent(errorMessage));
     return;
   }
 
@@ -228,13 +211,12 @@ app.post("/loggingin", async function (req, res) {
     req.session.user_type = result[0].user_type;
     req.session.cookie.maxAge = expireTime;
 
-    //redirect to appropriate page after session is saved
     req.session.save(function () {
       res.redirect("/loggedin");
     });
   } else {
     errorMessage = "Incorrect password. Did you forget your password?" +
-      " Click the \"Forgot Password\" button to reset it";
+    " Click the \"Forgot Password\" button to reset it";
     res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
   }
 });
@@ -275,10 +257,8 @@ app.get("/dataHistory", sessionValidation, async function (req, res) {
     dislikes.push(response);
   }
   var script = require("./scripts/likesDislikes.js");
-  res.render("dataHistory", {
-    likes: likes, dislikes: dislikes,
-    script: script, userLikesDislikes: userLikesDislikes[0]
-  });
+  res.render("dataHistory", { likes: likes, dislikes: dislikes,
+    script: script, userLikesDislikes: userLikesDislikes[0] });
 });
 
 app.get("/userSettings", sessionValidation, function (req, res) {
@@ -312,8 +292,7 @@ app.get("/favourites", sessionValidation, async function (req, res) {
   var script = require("./scripts/likesDislikes.js");
   res.render("favourites", {
     userLikesDislikes: userLikesDislikes[0],
-    favourites: favourites, script: script
-  });
+    favourites: favourites, script: script });
 });
 
 app.get("/playlists", sessionValidation, function (req, res) {
@@ -325,7 +304,7 @@ app.get("/playlists", sessionValidation, function (req, res) {
   res.render(template, data);
 });
 
-// view user's profile information
+
 app.get("/profile", sessionValidation, async function (req, res) {
   var username = req.session.username;
   const result = await userCollection
@@ -348,7 +327,6 @@ app.get("/profile", sessionValidation, async function (req, res) {
   }
 });
 
-// general profile page for users
 app.get("/profileUser", sessionValidation, async function (req, res) {
   var username = req.session.username;
   const result = await userCollection
@@ -403,17 +381,10 @@ app.post("/submitEmail", function (req, res) {
   }
 });
 
-/**
- * Checks if an email exists and renders the security question page.
- *
- * @param {*} req The HTTP request object containing the email to check.
- * @param {*} res The HTTP response object for sending a response.
- */
 app.post("/checkEmail", async function (req, res) {
   var email = req.body.email;
   let errorMessage = "";
 
-  // Check if email exists in database
   const result = await userCollection
     .find({ email: email })
     .project({ username: 1, securityQuestion: 1, _id: 1 })
@@ -423,22 +394,22 @@ app.post("/checkEmail", async function (req, res) {
     errorMessage = "Email not found. Please try again.";
     console.log("user not found");
     res.redirect("/forgotPassword?errorMessage=" +
-      encodeURIComponent(errorMessage));
+    encodeURIComponent(errorMessage));
     return;
   } else {
     const token = crypto.randomBytes(20).toString("hex");
-    const expireTime = Date.now() + 1 * 60 * 60 * 1000;
+    const expireTime = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
     await userCollection.updateOne(
       { email: email },
       { $set: { resetPasswordToken: token, resetPasswordExpires: expireTime } }
     );
     console.log("token: " + token);
 
-    // Render security question page
     res.render("securityQuestion", {
       email: email,
       securityQuestion: result[0].securityQuestion,
       token: token,
+      // Pass the errorMessage variable to the res.render() method
       errorMessage: errorMessage
     });
   }
@@ -446,10 +417,10 @@ app.post("/checkEmail", async function (req, res) {
 
 app.get("/securityQuestion", function (req, res) {
   const errorMessage = req.query.errorMessage || "";
+  // Retrieve securityQuestion from query parameter if needed
   const securityQuestion = req.query.securityQuestion || "";
   res.render("securityQuestion", {
-    errorMessage: errorMessage, securityQuestion: securityQuestion
-  });
+    errorMessage: errorMessage, securityQuestion: securityQuestion });
 });
 
 app.get("/securityQuestionError", function (req, res) {
@@ -464,22 +435,13 @@ app.get("/resetPasswordError", function (req, res) {
   res.render("resetPasswordError");
 });
 
-/**
- * Allows a user to reset their password if they answered their security
- * question correctly.
- *
- * @param req The HTTP request object containing the new password data.
- * @param res The HTTP response object for sending a response.
- */
 app.post("/resetPassword", async function (req, res) {
   var newPass = req.body.newPassword;
   var confirmPass = req.body.confirmPassword;
 
   const result = await userCollection.find({ email: req.body.email })
-    .project({
-      username: 1, resetPasswordExpires: 1,
-      resetPasswordToken: 1, _id: 1
-    }).toArray();
+    .project({ username: 1, resetPasswordExpires: 1,
+      resetPasswordToken: 1, _id: 1 }).toArray();
   if (newPass == null || confirmPass == null) {
     res.redirect("/resetPasswordError");
     console.log("password not entered");
@@ -501,40 +463,30 @@ app.post("/resetPassword", async function (req, res) {
   }
 });
 
-/**
- * Checks if the security question answer is correct and renders the reset
- * password page.
- *
- * @param req The HTTP request object containing the email, security answer, and token data.
- * @param res The HTTP response object for sending a response.
- */
 app.post("/checkSecurityQuestion", async function (req, res) {
   var email = req.body.email;
   var securityAnswer = req.body.securityAnswer;
   var token = req.body.token;
 
-  // finds the user with the given email
   const result = await userCollection.find({ email: email })
-    .project({
-      username: 1, securityAnswer: 1, resetPasswordExpires: 1,
-      resetPasswordToken: 1, _id: 1
-    }).toArray();
+      .project({ username: 1, securityAnswer: 1, resetPasswordExpires: 1,
+        resetPasswordToken: 1, _id: 1 }).toArray();
   console.log(result);
 
   if (securityAnswer == null) {
-    res.redirect("/securityQuestionError");
+      res.redirect("/securityQuestionError");
   } else if (result.length != 1) {
-    res.redirect("/securityQuestionError");
+      res.redirect("/securityQuestionError");
   } else {
     const user = result[0];
     if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
-      if (Date.now() > user.resetPasswordExpires) {
-        res.redirect("/tokenExpired");
-      } else {
-        res.render("resetPassword", { email: email, token: token });
-      }
+        if (Date.now() > user.resetPasswordExpires) {
+            res.redirect("/tokenExpired");
+        } else {
+            res.render("resetPassword", { email: email, token: token });
+        }
     } else {
-      res.redirect("/securityQuestionError");
+        res.redirect("/securityQuestionError");
     }
   }
 });
@@ -603,12 +555,10 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
       }
     }
 
-    res.render("results", {
-      results: list, script: script,
-      userLikesDislikes: userLikesDislikes[0]
-    });
+    res.render("results", { results: list, script: script,
+      userLikesDislikes: userLikesDislikes[0]});
 
-    //if no filters passed, get new results
+  //if no filters passed, get new results
   } else {
     const userLikesDislikes = await userCollection
       .find({ username: req.session.username })
@@ -642,7 +592,7 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
       { $set: { searchHistory: result[0].searchHistory } });
     searchTerm = formatSearch(searchTerm);
     list = await songCollection.find()
-      .project({ Track: 1, Artist: 1, Album: 1, Uri: 1 }).toArray();
+      .project({ Track: 1, Artist: 1, Album: 1, Uri: 1}).toArray();
 
     //filter songs in the database based on the given name
     list.forEach((song) => {
@@ -671,15 +621,13 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
         i--;
       }
     }
-
+    
     //log everything for future filtering
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
     console.log(req.session.searchResults);
-    res.render("results", {
-      results: list, script: script,
-      userLikesDislikes: userLikesDislikes[0]
-    });
+    res.render("results", { results: list, script: script,
+      userLikesDislikes: userLikesDislikes[0] });
   }
 });
 
@@ -751,43 +699,41 @@ app.post("/submitFilters", function (req, res) {
 });
 
 //give random songs for the user to like or dislike
-app.get("/recommendationsTuning", sessionValidation, async function (req, res) {
-  var script = require("./scripts/likesDislikes.js");
-  var songs = [];
-  var collectionSize = await songCollection.count();
-  var songIds = [undefined];
-  var temp;
-  //get user's existing likes and dislikes
-  const userLikesDislikes = await userCollection
-    .find({ username: req.session.username })
-    .project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
-  if (userLikesDislikes[0].likes == null ||
-    userLikesDislikes[0].dislikes == null ||
-    userLikesDislikes[0].favourites == null) {
-    initLikesDislikes(userLikesDislikes[0]);
-  }
-  for (let i = 0; i < 5; i++) {
-    var counter = 0;
-    //validation loop the user hasn't already rated the random song
-    while (songIds.includes(temp) || userLikesDislikes[0].likes.includes(temp) ||
-      userLikesDislikes[0].dislikes.includes(temp)) {
-      temp = Math.floor(Math.random() * collectionSize);
-      if (++counter >= 100) {
-        break;
-      }
+app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
+    var script = require("./scripts/likesDislikes.js");
+    var songs = [];
+    var collectionSize = await songCollection.count();
+    var songIds = [undefined];
+    var temp;
+    //get user's existing likes and dislikes
+    const userLikesDislikes = await userCollection
+      .find({ username: req.session.username })
+      .project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+    if (userLikesDislikes[0].likes == null ||
+      userLikesDislikes[0].dislikes == null ||
+      userLikesDislikes[0].favourites == null) {
+      initLikesDislikes(userLikesDislikes[0]);
     }
-    if (counter >= 100) {
-      break;
+    for (let i = 0; i < 5; i++) {
+        var counter = 0;
+        //validation loop the user hasn't already rated the random song
+        while (songIds.includes(temp) || userLikesDislikes[0].likes.includes(temp) ||
+          userLikesDislikes[0].dislikes.includes(temp)) {
+            temp = Math.floor(Math.random() * collectionSize);
+            if (++counter >= 100) {
+                break;
+            }
+        }
+        if (counter >= 100) {
+            break;
+        }
+        songIds.push(temp);
+        let res = await songCollection.findOne({ _id: temp });
+        res.Uri = res.Uri.split(":")[2];
+        songs.push(res);
     }
-    songIds.push(temp);
-    let res = await songCollection.findOne({ _id: temp });
-    res.Uri = res.Uri.split(":")[2];
-    songs.push(res);
-  }
-  res.render("recommendationsTuning", {
-    script: script,
-    songs: songs, userLikesDislikes: userLikesDislikes[0]
-  });
+    res.render("recommendationsTuning", { script: script,
+      songs: songs, userLikesDislikes: userLikesDislikes[0]});
 });
 
 /**
@@ -800,72 +746,60 @@ async function initLikesDislikes(array) {
     array.likes = [];
   }
   if (array.dislikes == null) {
-    array.dislikes = [];
+      array.dislikes = [];
   }
   if (array.favourites == null) {
     array.favourites = [];
   }
   await userCollection.updateOne({ _id: array._id },
-    {
-      $set: {
-        likes: array.likes, dislikes: array.dislikes,
-        favourites: array.favourites
-      }
-    });
+    { $set: { likes: array.likes, dislikes: array.dislikes,
+      favourites: array.favourites } });
 }
 
 //like a given song based on id
 app.get("/like/:id", async function (req, res) {
-  var userLikesDislikes = await userCollection
-    .find({ username: req.session.username })
-    .project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
-  userLikesDislikes = userLikesDislikes[0];
-  var id = parseInt(req.params.id);
-  if (userLikesDislikes.dislikes.includes(id)) {
-    userLikesDislikes.dislikes
-      .splice(userLikesDislikes.dislikes.indexOf(id), 1);
-  }
-  if (userLikesDislikes.likes.includes(id)) {
-    userLikesDislikes.likes
-      .splice(userLikesDislikes.likes.indexOf(id), 1);
-  } else {
-    userLikesDislikes.likes.push(id);
-  }
-  await userCollection.updateOne({ _id: userLikesDislikes._id },
-    {
-      $set: {
-        likes: userLikesDislikes.likes,
-        dislikes: userLikesDislikes.dislikes
-      }
-    });
-  res.send("" + id);
+    var userLikesDislikes = await userCollection
+      .find({ username: req.session.username })
+      .project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+    userLikesDislikes = userLikesDislikes[0];
+    var id = parseInt(req.params.id);
+    if (userLikesDislikes.dislikes.includes(id)) {
+        userLikesDislikes.dislikes
+          .splice(userLikesDislikes.dislikes.indexOf(id), 1);
+    }
+    if (userLikesDislikes.likes.includes(id)) {
+        userLikesDislikes.likes
+          .splice(userLikesDislikes.likes.indexOf(id), 1);
+    } else {
+        userLikesDislikes.likes.push(id);
+    }
+    await userCollection.updateOne({ _id: userLikesDislikes._id },
+      { $set: { likes: userLikesDislikes.likes,
+        dislikes: userLikesDislikes.dislikes } });
+    res.send("" + id);
 });
 
 //dislike a given song based on id
 app.get("/dislike/:id", async function (req, res) {
-  var userLikesDislikes = await userCollection
-    .find({ username: req.session.username })
-    .project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
-  userLikesDislikes = userLikesDislikes[0];
-  var id = parseInt(req.params.id);
-  if (userLikesDislikes.likes.includes(id)) {
-    userLikesDislikes.likes
-      .splice(userLikesDislikes.likes.indexOf(id), 1);
-  }
-  if (userLikesDislikes.dislikes.includes(id)) {
-    userLikesDislikes.dislikes
-      .splice(userLikesDislikes.dislikes.indexOf(id), 1);
-  } else {
-    userLikesDislikes.dislikes.push(id);
-  }
-  await userCollection.updateOne({ _id: userLikesDislikes._id },
-    {
-      $set: {
-        likes: userLikesDislikes.likes,
-        dislikes: userLikesDislikes.dislikes
-      }
-    });
-  res.send("" + id);
+    var userLikesDislikes = await userCollection
+      .find({ username: req.session.username })
+      .project({ likes: 1, dislikes: 1, _id: 1 }).toArray();
+    userLikesDislikes = userLikesDislikes[0];
+    var id = parseInt(req.params.id);
+    if (userLikesDislikes.likes.includes(id)) {
+        userLikesDislikes.likes
+          .splice(userLikesDislikes.likes.indexOf(id), 1);
+    }
+    if (userLikesDislikes.dislikes.includes(id)) {
+        userLikesDislikes.dislikes
+          .splice(userLikesDislikes.dislikes.indexOf(id), 1);
+    } else {
+        userLikesDislikes.dislikes.push(id);
+    }
+    await userCollection.updateOne({ _id: userLikesDislikes._id },
+      { $set: { likes: userLikesDislikes.likes,
+        dislikes: userLikesDislikes.dislikes } });
+    res.send("" + id);
 });
 
 //favourite a given song based on id
@@ -876,10 +810,10 @@ app.get("/favourite/:id", async function (req, res) {
   userFavourites = userFavourites[0];
   var id = parseInt(req.params.id);
   if (userFavourites.favourites.includes(id)) {
-    userFavourites.favourites
-      .splice(userFavourites.favourites.indexOf(id), 1);
+      userFavourites.favourites
+        .splice(userFavourites.favourites.indexOf(id), 1);
   } else {
-    userFavourites.favourites.push(id);
+      userFavourites.favourites.push(id);
   }
   await userCollection.updateOne({ _id: userFavourites._id },
     { $set: { favourites: userFavourites.favourites } });
@@ -902,10 +836,8 @@ app.post("/recommendations", async function (req, res) {
       const userLikesDislikes = await userCollection
         .find({ username: req.session.username })
         .project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
-      res.render("recommendations", {
-        song: song,
-        script: script, userLikesDislikes: userLikesDislikes[0]
-      });
+      res.render("recommendations", { song: song,
+        script: script, userLikesDislikes: userLikesDislikes[0] });
     } else {
       console.error("Song not found");
       res.status(404).send("Song not found");
@@ -913,7 +845,7 @@ app.post("/recommendations", async function (req, res) {
   }).catch((error) => {
     // Handle errors
     console.error(error);
-    res.status(500).send("Error calling the API, please make sure your Songgestion Engine is running! https://github.com/Tarasios/SonggestionsEngine");
+    res.status(500).send("Error calling the API");
   });
 });
 
