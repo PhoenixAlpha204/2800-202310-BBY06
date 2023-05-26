@@ -1,5 +1,9 @@
 <%- include("templates/header") %>
 <h2 class="pb-2 border-bottom border-info" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Data History</h2>
+<div class="btn-group" role="group">
+    <button type="button" class="theme btn btn-outline-primary active" id="like">Likes</button>
+    <button type="button" class="theme btn btn-outline-primary" id="dislike">Dislikes</button>
+</div>
 <div class="d-grid gap-2 d-sm-flex justify-content-sm-center" id="likes">
     <div class="list-group">
         <% for(i = 0; i < likes.length; i++) { %>
@@ -67,10 +71,6 @@
             </div>
         <% } %>
     </div>
-</div>
-<div class="btn-group" role="group">
-    <button type="button" class="theme btn btn-outline-primary active" id="like">Likes</button>
-    <button type="button" class="theme btn btn-outline-primary" id="dislike">Dislikes</button>
 </div>
 <script>
     $('body').on('click', '.likeButton', async function() {
