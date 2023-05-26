@@ -148,15 +148,19 @@ As the web server hosting limitations prevent us from running the Python API ser
 ## 9. Contact Information:
 
 Connie Gildemeister
-Discord: Connie Allure~#1510
+
+    Discord: Connie Allure~#1510
 
 Cassiel Williams (Tarasios)
-Discord: Tarasios#9030
+
+    Discord: Tarasios#9030
 
 Quincy Wong
-Discord: PhoenixAlpha#0740
+
+    Discord: PhoenixAlpha#0740
 
 Vincent Cheung
-Discord: Vyttmin#6355
+
+    Discord: Vyttmin#6355
 
 Please feel free to reach out to any of us through Discord for any questions, collaborations, or general inquiries. We look forward to hearing from you!
