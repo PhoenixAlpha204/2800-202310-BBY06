@@ -4,10 +4,10 @@
 Our team at BBY06 is developing an AI-powered music recommendation app to help music listeners find new songs to listen to based on their unique tastes.
 
 ## 3. Technologies Used: 
-Frontend: ejs/html/css
-Backend: Node.js
-Database: MongoDB
-Other Tools: axios, bcrypt, joi, express, crypto File Contents Please refer to the file tree below for a listing of the project's contents:
+* Frontend: EJS/HTML/CSS
+* Backend: Node.js
+* Database: MongoDB
+* Other Tools: axios, bcrypt, joi, express, crypto
 
 ## 4. Listing of File Contents of Folder:
 
@@ -104,6 +104,8 @@ Project Directory:
 
 To set up the development environment and run the project locally, follow these steps:
 
+(Pleae note the installation of the [Songgestion Engine](https://github.com/Tarasios/SonggestionsEngine) on localhost is required for both options.)
+
 * Option 1: 
 http://pqrhigvnxy.eu09.qoddiapp.com/ Search for a song and click the "Recommendations" button to receive a recommendation.
 
@@ -112,26 +114,25 @@ Localhost Clone the repository:git clone https://github.com/PhoenixAlpha204/2800
 
 ## 6. How to use the product (Features):
 
-
 To register for Songgestions, new users are required to provide their username, email, password, and select a security question. Once the account creation form is fully filled out and submitted, users will be directed to the landing page exclusively for logged-in users. A welcome message will greet them and display their username at the top of the page.
 
 To begin receiving personalized recommendations, simply click on the "Recommendations" option in the Navbar or use the blue "Songgest" button located on the landing page. You will be presented with a vertical stack of cards, showcasing five songs. Each card will display the song's name along with interactive buttons such as "Add to Favorites," "Like/Dislike," and "Songgest Me." Additionally, an embedded Spotify player will allow you to preview a sample of each song. To discover new songs, simply refresh the page.
 
 To search songs, simply click on the "Browse" option in the navbar. Enter the name of a song, and a list of songs will be presented to you in a vertical stack of cards. Given the extensive database, locating a specific song may require some additional steps. To streamline your search, click on the blue "Filter" button located at the bottom right corner. This will enable users to refine their search further by specifying the artist or album name, ensuring more accurate and targeted results.
 
-To utilize the AI-powered "Songgest Me" feature, simply click the "Songgest Me" button once you have found a song. For optimal results, please ensure that the Songgestion Engine is operational. Instructions on how to set it up can be found here: Link to Songgestion Engine's GitHub page.
+To utilize the AI-powered "Songgest Me" feature, simply click the "Songgest Me" button once you have found a song. For optimal results, please ensure that the Songgestion Engine is operational. Instructions on how to set it up can be found here: [Link to Songgestion Engine's GitHub page](https://github.com/Tarasios/SonggestionsEngine).
 
 ## 7. Credits, References, and Licenses:
 
-Spotify API
+**Spotify API**
 
 The Spotify API has been utilized in this app to provide music-related features. The integration of the Spotify API, allows users to quickly listen to a preview of songs, retrieve and display music 
 
-Adobe Stock
+**Adobe Stock**
 
 Certain stock images on our site have been sourced from Adobe Stock. These visual resources have contributed to the aesthetic appeal and design of our app.
 
-Kaggle Dataset
+**Kaggle Dataset**
 
 The Kaggle dataset used in this project is sourced from https://www.kaggle.com/datasets/salvatorerastelli/spotify-and-youtube
 
@@ -147,16 +148,20 @@ As the web server hosting limitations prevent us from running the Python API ser
 
 ## 9. Contact Information:
 
-Connie Gildemeister
-Discord: Connie Allure~#1510
+**Connie Gildemeister**
+   
+    Discord: Connie Allure~#1510
 
-Cassiel Williams (Tarasios)
-Discord: Tarasios#9030
+**Cassiel Williams (Tarasios)**
 
-Quincy Wong
-Discord: PhoenixAlpha#0740
+    Discord: Tarasios#9030
 
-Vincent Cheung
-Discord: Vyttmin#6355
+**Quincy Wong**
+
+    Discord: PhoenixAlpha#0740
+
+**Vincent Cheung**
+
+    Discord: Vyttmin#6355
 
 Please feel free to reach out to any of us through Discord for any questions, collaborations, or general inquiries. We look forward to hearing from you!
