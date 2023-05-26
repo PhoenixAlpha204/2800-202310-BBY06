@@ -1,6 +1,6 @@
 # 1. Title: Songgestions
 
-## 2. What is it?:
+## 2. What is it?
 Our team at BBY06 is developing an AI-powered music recommendation app to help music listeners find new songs to listen to based on their unique tastes.
 
 ## 3. Technologies Used: 
@@ -153,7 +153,7 @@ Discord: Connie Allure~#1510
 Cassiel Williams (Tarasios)
 Discord: Tarasios#9030
 
-Quincy Wing
+Quincy Wong
 Discord: PhoenixAlpha#0740
 
 Vincent Cheung
