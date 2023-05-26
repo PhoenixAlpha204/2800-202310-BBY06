@@ -508,9 +508,11 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
   const userLikesDislikes = await userCollection
     .find({ username: req.session.username })
     .project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
+
   //if passed filters, filter previous results
   if (req.query.artist != undefined || req.query.album != undefined) {
     list = [...req.session.searchResults];
+
     //filter by artist
     if (req.query.artist != undefined) {
       var artist = req.query.artist.replace(/_/g, " ");
@@ -531,6 +533,7 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
         }
       }
     }
+
     //filter by album
     if (req.query.album != undefined) {
       var album = req.query.album.replace(/_/g, " ");
@@ -551,8 +554,10 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
         }
       }
     }
+
     res.render("results", { results: list, script: script,
       userLikesDislikes: userLikesDislikes[0]});
+
   //if no filters passed, get new results
   } else {
     const userLikesDislikes = await userCollection
@@ -571,6 +576,7 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
     }
     const result = await userCollection.find({ username: req.session.username })
       .project({ searchHistory: 1, _id: 1 }).toArray();
+
     //update user's search history with the new search term
     if (result[0].searchHistory == null) {
       result[0].searchHistory = [];
@@ -587,6 +593,7 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
     searchTerm = formatSearch(searchTerm);
     list = await songCollection.find()
       .project({ Track: 1, Artist: 1, Album: 1, Uri: 1}).toArray();
+
     //filter songs in the database based on the given name
     list.forEach((song) => {
       song.formattedName = formatSearch(song.Track);
@@ -614,6 +621,7 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
         i--;
       }
     }
+    
     //log everything for future filtering
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
