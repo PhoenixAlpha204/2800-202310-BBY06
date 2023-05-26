@@ -54,7 +54,7 @@ app.use("/", function (req, res, next) {
 
 app.use(cors({
   origin:"*",
-  methods:['GET']
+  methods:['GET', 'POST']
 }));
 
 app.set("view engine", "ejs");
