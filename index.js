@@ -10,6 +10,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const saltRounds = 12;
 const url = require("url");
+const cors = require("cors");
 
 const session = require("express-session");
 
@@ -50,6 +51,11 @@ app.use("/", function (req, res, next) {
   app.locals.currentUrl = url.parse(req.url).pathname;
   next();
 });
+
+app.use(cors({
+  origin:"*",
+  methods:['GET']
+}));
 
 app.set("view engine", "ejs");
 
