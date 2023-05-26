@@ -10,7 +10,6 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const saltRounds = 12;
 const url = require("url");
-const cors = require("cors");
 
 const session = require("express-session");
 
@@ -51,11 +50,6 @@ app.use("/", function (req, res, next) {
   app.locals.currentUrl = url.parse(req.url).pathname;
   next();
 });
-
-app.use(cors({
-  origin:"*",
-  methods:['GET', 'POST']
-}));
 
 app.set("view engine", "ejs");
 
@@ -898,7 +892,8 @@ app.post("/recommendations", async function (req, res) {
   var script = require("./scripts/likesDislikes.js");
   var id = parseInt(req.query.id);
   //send id to the ML model
-  axios.get(`http://127.0.0.1:5000/recommend/${id}`).then(async (response) => {
+  axios.get(`https://c4a7-2001-569-72ab-df00-60cb-a2c-f88e-f3b8.` +
+    `ngrok-free.app/recommend/${id}`).then(async (response) => {
     // Handle the API response
     console.log(response.data);
     var recommended_song_id = parseInt(response.data.ID);
