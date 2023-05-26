@@ -83,8 +83,9 @@ function sessionValidation(req, res, next) {
 app.get("/", function (req, res) {
   if (req.session.authenticated) {
     res.redirect("/loggedin");
+  } else {
+    res.render("index");
   }
-  res.render("index");
 });
 
 app.get("/createUser", function (req, res) {
