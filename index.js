@@ -621,7 +621,7 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
         i--;
       }
     }
-
+    
     //log everything for future filtering
     req.session.searchTerm = searchTerm;
     req.session.searchResults = list;
