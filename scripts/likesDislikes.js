@@ -16,7 +16,7 @@ function disliked(array, id) {
 
 function favourited(array, id) {
     if (array.favourites.includes(id)) {
-        return "blue";
+        return "gold";
     } else {
         return "black";
     }

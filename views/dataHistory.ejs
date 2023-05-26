@@ -1,5 +1,9 @@
 <%- include("templates/header") %>
 <h2 class="pb-2 border-bottom border-info" style="color: #16bac5; text-shadow: 2px 2px 0px #5863f8;">Data History</h2>
+<div class="btn-group" role="group">
+    <button type="button" class="theme btn btn-outline-primary active" id="like">Likes</button>
+    <button type="button" class="theme btn btn-outline-primary" id="dislike">Dislikes</button>
+</div>
 <div class="d-grid gap-2 d-sm-flex justify-content-sm-center" id="likes">
     <div class="list-group">
         <% for(i = 0; i < likes.length; i++) { %>
@@ -22,6 +26,9 @@
                     <button type="button" class="favouriteButton me-auto" id=<%= likes[i]._id + "_favourite"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: <%- script.favourited(userLikesDislikes, likes[i]._id) %>; font-size: 30pt;">star</span>
                     </button>
+                    <form action="/recommendations?id=<%= likes[i]._id %>" method="post">
+                        <button type="submit" class="btn btn-dark recommendButton" id=<%=likes[i]._id + "_recommend" %> style="margin-right: 40px;">Songgest Me</button>
+                    </form>
                     <button type="button" class="likeButton" id=<%= likes[i]._id + "_like"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: blue; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                     </button>
@@ -51,6 +58,9 @@
                     <button type="button" class="favouriteButton me-auto" id=<%= dislikes[i]._id + "_favourite"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: <%- script.favourited(userLikesDislikes, dislikes[i]._id) %>; font-size: 30pt;">star</span>
                     </button>
+                    <form action="/recommendations?id=<%= dislikes[i]._id %>" method="post">
+                        <button type="submit" class="btn btn-dark recommendButton" id=<%=dislikes[i]._id + "_recommend" %> style="margin-right: 40px;">Songgest Me</button>
+                    </form>
                     <button type="button" class="likeButton" id=<%= dislikes[i]._id + "_like"%> style="background: transparent; border: none;">
                         <span class="material-icons" style="color: black; font-size: 30pt; margin-right: 10px;">thumb_up</span>
                     </button>
@@ -62,10 +72,6 @@
         <% } %>
     </div>
 </div>
-<div class="btn-group" role="group">
-    <button type="button" class="theme btn btn-outline-primary active" id="like">Likes</button>
-    <button type="button" class="theme btn btn-outline-primary" id="dislike">Dislikes</button>
-</div>
 <script>
     $('body').on('click', '.likeButton', async function() {
         await like(this.id);
@@ -75,7 +81,7 @@
         } else if (color == "rgb(0, 0, 255)") {
             $(this).children("span").css("color", "black");
         }
-        var dislikeId = "#" + this.id[0] + "_dislike";
+        var dislikeId = "#" + parseInt(this.id) + "_dislike";
         color = $(dislikeId).children("span").css("color");
         if (color == "rgb(0, 0, 255)") {
             $(dislikeId).children("span").css("color", "black");
@@ -98,7 +104,7 @@
         } else if (color == "rgb(0, 0, 255)") {
             $(this).children("span").css("color", "black");
         }
-        var likeId = "#" + this.id[0] + "_like";
+        var likeId = "#" + parseInt(this.id) + "_like";
         color = $(likeId).children("span").css("color");
         if (color == "rgb(0, 0, 255)") {
             $(likeId).children("span").css("color", "black");
@@ -135,14 +141,9 @@
         await favourite(this.id);
         var color = $(this).children("span").css("color");
         if (color == "rgb(0, 0, 0)") {
-            $(this).children("span").css("color", "blue");
-        } else if (color == "rgb(0, 0, 255)") {
+            $(this).children("span").css("color", "gold");
+        } else if (color == "rgb(255, 215, 0)") {
             $(this).children("span").css("color", "black");
-        }
-        var dislikeId = "#" + this.id[0] + "_dislike";
-        color = $(dislikeId).children("span").css("color");
-        if (color == "rgb(0, 0, 255)") {
-            $(dislikeId).children("span").css("color", "black");
         }
     });
 
