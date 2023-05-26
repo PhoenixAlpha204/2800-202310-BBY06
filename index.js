@@ -913,7 +913,8 @@ app.post("/recommendations", async function (req, res) {
   }).catch((error) => {
     // Handle errors
     console.error(error);
-    res.status(500).send("Error calling the API, please make sure your Songgestion Engine is running! https://github.com/Tarasios/SonggestionsEngine");
+    res.status(500);
+    res.render("500");
   });
 });
 
