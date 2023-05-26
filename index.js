@@ -28,12 +28,9 @@ const mongodb_database = process.env.MONGODB_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const node_session_secret = process.env.NODE_SESSION_SECRET;
 
-// const ObjectId = require("mongodb").ObjectId;
-// const songgestions_email = process.env.SONGGESTIONS_SUPPORT_EMAIL;
-// const songgestions_password = process.env.SONGGESTIONS_SUPPORT_PASSWORD;
-
 var { database } = include("databaseConnection");
 const userCollection = database.db(mongodb_database).collection("users");
+const songCollection = database.db(mongodb_database).collection("kaggle");
 
 const navLinks = [
     {link: "/recommendationsTuning", name: "Recommendations"},
@@ -67,15 +64,12 @@ app.use(
   })
 );
 
-function isAuthenticated(req, res, next) {
-  if (req.session.authenticated) {
-    console.log("logged in");
-    res.redirect("/loggedin");
-  } else {
-    next();
-  }
-}
-
+/**
+ * Only allow user to proceed if they are logged in
+ * @param {*} req the request
+ * @param {*} res the response
+ * @param {*} next the page to proceed to
+ */
 function sessionValidation(req, res, next) {
   if (req.session.authenticated) {
     next();
@@ -85,16 +79,7 @@ function sessionValidation(req, res, next) {
   }
 }
 
-function adminAuthorization(req, res, next) {
-  if (req.session.user_type != "admin") {
-    res.status(403);
-    res.render("errorMessage", { error: "Not Authorized" });
-  } else {
-    next();
-  }
-}
-
-app.get("/", isAuthenticated, function (req, res) {
+app.get("/", function (req, res) {
   if (req.session.authenticated) {
     res.redirect("/loggedin");
   }
@@ -133,16 +118,18 @@ app.post("/submitUser", async function (req, res) {
   var email = req.body.email;
   var errorMessage = "";
 
-  var hashedPassword;
-  var hashedSecurityAnswer;
+  //encrypt password
+  var hashedPassword = await bcrypt.hash(password, saltRounds);
+  var hashedSecurityAnswer = await bcrypt.hash(
+    securityAnswer, saltRounds);
 
+  //validate input using Joi
   const schema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().max(20).required(),
     securityAnswer: Joi.string().max(20).required(),
     username: Joi.string().alphanum().max(20).required()
   });
-
   const validationResult = schema.validate({
     email, password, securityAnswer, username });
   if (validationResult.error != null) {
@@ -153,6 +140,7 @@ app.post("/submitUser", async function (req, res) {
     return;
   }
 
+  //provide error if various fields already exist in database
   const existingUser = await userCollection.findOne({ username: username });
   if (existingUser) {
     errorMessage = "Username already exists";
@@ -161,7 +149,6 @@ app.post("/submitUser", async function (req, res) {
     encodeURIComponent(errorMessage));
     return;
   }
-
   const existingEmail = await userCollection.findOne({ email: email });
   if (existingEmail) {
     errorMessage = "Email already exists";
@@ -171,9 +158,7 @@ app.post("/submitUser", async function (req, res) {
     return;
   }
 
-  hashedPassword = await bcrypt.hash(password, saltRounds);
-  hashedSecurityAnswer = await bcrypt.hash(securityAnswer, saltRounds);
-
+  //add user to database and log them in
   await userCollection.insertOne({
     email: email,
     password: hashedPassword,
@@ -182,13 +167,10 @@ app.post("/submitUser", async function (req, res) {
     user_type: "user",
     username: username
   });
-  console.log("Inserted user");
-
   req.session.authenticated = true;
   req.session.username = username;
   req.session.user_type = "user";
   req.session.cookie.maxAge = expireTime;
-
   res.redirect("/loggedin");
 });
 
@@ -198,6 +180,7 @@ app.post("/loggingin", async function (req, res) {
   var password = req.body.password;
   var errorMessage = "";
 
+  //validate input using joi
   const schema = Joi.string().max(20).required();
   const validationResult = schema.validate(username);
   if (validationResult.error != null) {
@@ -207,10 +190,12 @@ app.post("/loggingin", async function (req, res) {
     encodeURIComponent(errorMessage));
     return;
   }
+
+  //search database for given username
   const result = await userCollection.find({ username: username })
     .project({ password: 1, user_type: 1, username: 1, _id: 1 }).toArray();
 
-  console.log(result);
+  //return error if user not found
   if (result.length != 1) {
     console.log("user not found");
     errorMessage = "Username not found. Please try again.";
@@ -218,8 +203,9 @@ app.post("/loggingin", async function (req, res) {
       encodeURIComponent(errorMessage));
     return;
   }
+
+  //validate password, log in user if correct
   if (await bcrypt.compare(password, result[0].password)) {
-    console.log("correct password");
     req.session.authenticated = true;
     req.session.username = username;
     req.session.user_type = result[0].user_type;
@@ -228,13 +214,10 @@ app.post("/loggingin", async function (req, res) {
     req.session.save(function () {
       res.redirect("/loggedin");
     });
-    return;
   } else {
-    console.log("incorrect password");
     errorMessage = "Incorrect password. Did you forget your password?" +
     " Click the \"Forgot Password\" button to reset it";
     res.redirect("/login?errorMessage=" + encodeURIComponent(errorMessage));
-    return;
   }
 });
 
@@ -247,6 +230,7 @@ app.get("/loggedin", sessionValidation, function (req, res) {
   res.render(template, data);
 });
 
+//view user's previous likes and dislikes
 app.get("/dataHistory", sessionValidation, async function (req, res) {
   var likes = [];
   var dislikes = [];
@@ -258,19 +242,18 @@ app.get("/dataHistory", sessionValidation, async function (req, res) {
     userLikesDislikes[0].favourites == null) {
     initLikesDislikes(userLikesDislikes[0]);
   }
-  const songCollection = database.db(mongodb_database).collection("kaggle");
+  //create list of likes
   for (let i = 0; i < userLikesDislikes[0].likes.length; i++) {
     let response = await songCollection
       .findOne({ _id: userLikesDislikes[0].likes[i] });
-    const uriParts = response.Uri.split(":");
-    response.Uri = uriParts[2];
+    response.Uri = response.Uri.split(":")[2];
     likes.push(response);
   }
+  //create list of dislikes
   for (let i = 0; i < userLikesDislikes[0].dislikes.length; i++) {
     let response = await songCollection
       .findOne({ _id: userLikesDislikes[0].dislikes[i] });
-    const uriParts = response.Uri.split(":");
-    response.Uri = uriParts[2];
+    response.Uri = response.Uri.split(":")[2];
     dislikes.push(response);
   }
   var script = require("./scripts/likesDislikes.js");
@@ -287,6 +270,7 @@ app.get("/userSettings", sessionValidation, function (req, res) {
   res.render(template, data);
 });
 
+//view user's favourited songs
 app.get("/favourites", sessionValidation, async function (req, res) {
   const userLikesDislikes = await userCollection
     .find({ username: req.session.username })
@@ -297,12 +281,11 @@ app.get("/favourites", sessionValidation, async function (req, res) {
     initLikesDislikes(userLikesDislikes[0]);
   }
   var favourites = [];
-  const songCollection = database.db(mongodb_database).collection("kaggle");
+  //create list of favourites
   for (let i = 0; i < userLikesDislikes[0].favourites.length; i++) {
     let res = await songCollection
       .findOne({ _id: userLikesDislikes[0].favourites[i] });
-    const uriParts = res.Uri.split(":");
-    res.Uri = uriParts[2];
+    res.Uri = res.Uri.split(":")[2];
     favourites.push(res);
   }
   console.log(favourites);
@@ -400,7 +383,7 @@ app.post("/submitEmail", function (req, res) {
 
 app.post("/checkEmail", async function (req, res) {
   var email = req.body.email;
-  let errorMessage = ""; // Declare and initialize the errorMessage variable
+  let errorMessage = "";
 
   const result = await userCollection
     .find({ email: email })
@@ -432,7 +415,6 @@ app.post("/checkEmail", async function (req, res) {
   }
 });
 
-
 app.get("/securityQuestion", function (req, res) {
   const errorMessage = req.query.errorMessage || "";
   // Retrieve securityQuestion from query parameter if needed
@@ -454,37 +436,29 @@ app.get("/resetPasswordError", function (req, res) {
 });
 
 app.post("/resetPassword", async function (req, res) {
-  var email = req.body.email;
   var newPass = req.body.newPassword;
   var confirmPass = req.body.confirmPassword;
 
-  const result = await userCollection.find({ email: email })
+  const result = await userCollection.find({ email: req.body.email })
     .project({ username: 1, resetPasswordExpires: 1,
       resetPasswordToken: 1, _id: 1 }).toArray();
   if (newPass == null || confirmPass == null) {
     res.redirect("/resetPasswordError");
     console.log("password not entered");
-    return;
-  }
-  if (result.length != 1) {
-    console.log("user not found");
+  } else if (result.length != 1) {
     res.redirect("/resetPasswordError");
     console.log("user not found");
-    return;
   } else {
     if (newPass !== confirmPass) {
-      console.log("passwords do not match");
       res.redirect("/resetPasswordError");
       console.log("passwords do not match");
-      return;
     } else {
       console.log("passwords match");
       var hashedPassword = await bcrypt.hash(newPass, saltRounds);
-      await userCollection.updateOne({ email: email },
+      await userCollection.updateOne({ email: req.body.email },
         { $set: { password: hashedPassword } });
       console.log("password updated");
       res.redirect("/login");
-      return;
     }
   }
 });
@@ -494,102 +468,39 @@ app.post("/checkSecurityQuestion", async function (req, res) {
   var securityAnswer = req.body.securityAnswer;
   var token = req.body.token;
 
-  const result = await userCollection
-      .find({ email: email })
-      .project({ username: 1, securityAnswer: 1,
-        resetPasswordExpires: 1, resetPasswordToken: 1, _id: 1 })
-      .toArray();
+  const result = await userCollection.find({ email: email })
+      .project({ username: 1, securityAnswer: 1, resetPasswordExpires: 1,
+        resetPasswordToken: 1, _id: 1 }).toArray();
   console.log(result);
 
   if (securityAnswer == null) {
       res.redirect("/securityQuestionError");
-      return;
-  }
-  if (result.length != 1) {
-      console.log("user not found");
+  } else if (result.length != 1) {
       res.redirect("/securityQuestionError");
-      return;
   } else {
-      const user = result[0];
-      if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
-          console.log("correct security answer");
-          if (Date.now() > user.resetPasswordExpires) {
-              console.log("token expired");
-              res.redirect("/tokenExpired");
-              return;
-          } else {
-              console.log("token not expired");
-              res.render("resetPassword", { email: email, token: token });
-              return;
-          }
-      } else {
-          console.log("incorrect security answer");
-          res.redirect("/securityQuestionError");
-          return;
-      }
+    const user = result[0];
+    if (await bcrypt.compare(securityAnswer, user.securityAnswer)) {
+        if (Date.now() > user.resetPasswordExpires) {
+            res.redirect("/tokenExpired");
+        } else {
+            res.render("resetPassword", { email: email, token: token });
+        }
+    } else {
+        res.redirect("/securityQuestionError");
+    }
   }
 });
-
-
-// const nodemailer = require("nodemailer");
-// const { error } = require("console");
 
 app.get("/logout", function (req, res) {
   req.session.destroy();
   res.redirect("/");
 });
 
-app.get("/admin", sessionValidation,
-  adminAuthorization, async function (req, res) {
-  if (!req.session.authenticated) {
-    res.redirect("/login");
-  }
-  const result = await userCollection
-    .find()
-    .project({ username: 1, _id: 1 })
-    .toArray();
-
-  res.render("admin", { users: result });
-});
-
-app.post(
-  "/adminUser",
-  sessionValidation,
-  adminAuthorization,
-  async function (req, res) {
-    const ObjectId = require("mongodb").ObjectId;
-    const userId = req.body.userId;
-    const userObjectId = new ObjectId(userId);
-    await userCollection.updateOne(
-      { _id: userObjectId },
-      { $set: { user_type: "admin" } }
-    );
-    console.log(userId);
-    res.redirect("/admin");
-  }
-);
-
-app.post(
-  "/unAdminUser",
-  sessionValidation,
-  adminAuthorization,
-  async function (req, res) {
-    const ObjectId = require("mongodb").ObjectId;
-    const userId = req.body.userId;
-    const userObjectId = new ObjectId(userId);
-    await userCollection.updateOne(
-      { _id: userObjectId },
-      { $set: { user_type: "user" } }
-    );
-    console.log(userId);
-    res.redirect("/admin");
-  }
-);
-
 app.get("/search", sessionValidation, function (req, res) {
   res.render("search");
 });
 
+// return song results matching a given query
 app.post("/searchSong", sessionValidation, async function (req, res) {
   var script = require("./scripts/likesDislikes.js");
   var list;
@@ -674,15 +585,13 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
     await userCollection.updateOne({ _id: result[0]._id },
       { $set: { searchHistory: result[0].searchHistory } });
     searchTerm = formatSearch(searchTerm);
-    const songCollection = database.db(mongodb_database).collection("kaggle");
     list = await songCollection.find()
       .project({ Track: 1, Artist: 1, Album: 1, Uri: 1}).toArray();
     //filter songs in the database based on the given name
     list.forEach((song) => {
       song.formattedName = formatSearch(song.Track);
       song.count = 0;
-      const uriParts = song.Uri.split(":");
-      song.Uri = uriParts[2];
+      song.Uri = song.Uri.split(":")[2];
     });
     var count = 0;
     list.forEach((song) => {
@@ -714,8 +623,12 @@ app.post("/searchSong", sessionValidation, async function (req, res) {
   }
 });
 
-//this function sourced from:
-//https://astromacguffin.com/ref/id/62dc488124d8b5752194eccd
+/**
+ * Attribution: https://astromacguffin.com/ref/id/62dc488124d8b5752194eccd
+ * Format a given string as an array of terms
+ * @param {*} searchTerm the string to format
+ * @returns the formatted string
+ */
 function formatSearch(searchTerm) {
   return searchTerm
     .replace(/\(/gi, " ")
@@ -777,13 +690,14 @@ app.post("/submitFilters", function (req, res) {
   }
 });
 
+//give random songs for the user to like or dislike
 app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
     var script = require("./scripts/likesDislikes.js");
     var songs = [];
-    const songCollection = database.db(mongodb_database).collection("kaggle");
     var collectionSize = await songCollection.count();
     var songIds = [undefined];
     var temp;
+    //get user's existing likes and dislikes
     const userLikesDislikes = await userCollection
       .find({ username: req.session.username })
       .project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
@@ -794,12 +708,11 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
     }
     for (let i = 0; i < 5; i++) {
         var counter = 0;
-        while (songIds.includes(temp) ||
-          userLikesDislikes[0].likes.includes(temp) ||
+        //validation loop the user hasn't already rated the random song
+        while (songIds.includes(temp) || userLikesDislikes[0].likes.includes(temp) ||
           userLikesDislikes[0].dislikes.includes(temp)) {
             temp = Math.floor(Math.random() * collectionSize);
-            counter++;
-            if (counter >= 100) {
+            if (++counter >= 100) {
                 break;
             }
         }
@@ -808,14 +721,18 @@ app.get("/recommendationsTuning", sessionValidation, async function(req, res) {
         }
         songIds.push(temp);
         let res = await songCollection.findOne({ _id: temp });
-        const uriParts = res.Uri.split(":");
-        res.Uri = uriParts[2];
+        res.Uri = res.Uri.split(":")[2];
         songs.push(res);
     }
     res.render("recommendationsTuning", { script: script,
       songs: songs, userLikesDislikes: userLikesDislikes[0]});
 });
 
+/**
+ * Create various fields in the user's database entry
+ * if they do not already exist
+ * @param {*} array the user's database entry
+ */
 async function initLikesDislikes(array) {
   if (array.likes == null) {
     array.likes = [];
@@ -831,6 +748,7 @@ async function initLikesDislikes(array) {
       favourites: array.favourites } });
 }
 
+//like a given song based on id
 app.get("/like/:id", async function (req, res) {
     var userLikesDislikes = await userCollection
       .find({ username: req.session.username })
@@ -853,6 +771,7 @@ app.get("/like/:id", async function (req, res) {
     res.send("" + id);
 });
 
+//dislike a given song based on id
 app.get("/dislike/:id", async function (req, res) {
     var userLikesDislikes = await userCollection
       .find({ username: req.session.username })
@@ -875,6 +794,7 @@ app.get("/dislike/:id", async function (req, res) {
     res.send("" + id);
 });
 
+//favourite a given song based on id
 app.get("/favourite/:id", async function (req, res) {
   var userFavourites = await userCollection
     .find({ username: req.session.username })
@@ -892,19 +812,19 @@ app.get("/favourite/:id", async function (req, res) {
   res.send("" + id);
 });
 
+//based on a given id, recommend the most similar song
 app.post("/recommendations", async function (req, res) {
   var script = require("./scripts/likesDislikes.js");
   var id = parseInt(req.query.id);
+  //send id to the ML model
   axios.get(`http://127.0.0.1:5000/recommend/${id}`).then(async (response) => {
     // Handle the API response
     console.log(response.data);
     var recommended_song_id = parseInt(response.data.ID);
-    const songCollection = database.db(mongodb_database).collection("kaggle");
     let song = await songCollection
       .findOne({ _id: recommended_song_id });
     if (song) {
-      const uriParts = song.Uri.split(":");
-      song.Uri = uriParts[2];
+      song.Uri = song.Uri.split(":")[2];
       const userLikesDislikes = await userCollection
         .find({ username: req.session.username })
         .project({ likes: 1, dislikes: 1, favourites: 1, _id: 1 }).toArray();
